@@ -7,6 +7,9 @@
     "dev": "tsc -p ./ --watch --sourceMap",
     "build": "tsc -p ./"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@rollup/pluginutils": "^5.0.2",
     "@unocss/config": "^0.50.6",

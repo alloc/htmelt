@@ -12,6 +12,11 @@
     "prepublishOnly": "rimraf dist && tsc --build",
     "update": "npx npm-check-updates -u && npx typesync && npm i && npm outdated"
   },
+  "files": [
+    "*.{d.ts,d.mts,mjs}",
+    "dist",
+    "!dist/*.tsbuildinfo"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/alloc/htmelt.git"
