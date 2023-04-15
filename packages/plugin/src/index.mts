@@ -1,4 +1,4 @@
-import { Attribute, ParentNode } from '@web/parse5-utils'
+import { Attribute, Element, ParentNode } from '@web/parse5-utils'
 import * as esbuild from 'esbuild'
 import 'esbuild-extra/global'
 import * as http from 'http'

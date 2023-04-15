@@ -43,7 +43,7 @@ export type UserConfig = {
   /** @see https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-run */
   webext?: boolean | WebExtension.Config
   esbuild?: esbuild.BuildOptions
-  lightningCss?: lightningCss.BundleAsyncOptions<any>
+  lightningCss?: Omit<lightningCss.BundleAsyncOptions<any>, 'filename'>
   htmlMinifierTerser?: htmlMinifierTerser.Options
   isCritical?: boolean
   deletePrev?: boolean
