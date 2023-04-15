@@ -1,9 +1,14 @@
-import { Attribute, findElements, getAttribute, Node } from '@web/parse5-utils'
+import {
+  Config,
+  findElements,
+  getAttribute,
+  Node,
+  StyleReference,
+} from '@htmelt/plugin'
 import { writeFile } from 'fs/promises'
 import { gray, red, yellow } from 'kleur/colors'
 import * as lightningCss from 'lightningcss'
 import path from 'path'
-import { Config } from '../config.mjs'
 import { baseRelative, createDir } from './utils.mjs'
 
 export async function buildCSSFile(
@@ -75,17 +80,13 @@ export async function buildCSSFile(
   }
 }
 
-export interface RelativeStyle {
-  readonly srcAttr: Attribute
-  readonly srcPath: string
-}
-
 export function findRelativeStyles(document: Node, file: string) {
-  const results: RelativeStyle[] = []
+  const results: StyleReference[] = []
   for (const styleNode of findStyleSheets(document)) {
     const srcAttr = styleNode.attrs.find(a => a.name === 'href')
     if (srcAttr?.value.startsWith('./')) {
       results.push({
+        node: styleNode,
         srcAttr,
         srcPath: path.join(path.dirname(file), srcAttr.value),
       })
@@ -95,7 +96,7 @@ export function findRelativeStyles(document: Node, file: string) {
 }
 
 export async function buildRelativeStyles(
-  styles: RelativeStyle[],
+  styles: StyleReference[],
   config: Config,
   flags?: { watch?: boolean }
 ) {

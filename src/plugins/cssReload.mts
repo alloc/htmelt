@@ -1,10 +1,8 @@
+import { Config, CssPlugin, md5Hex, Plugin } from '@htmelt/plugin'
 import fs from 'fs'
-import md5Hex from 'md5-hex'
 import svgToDataUri from 'mini-svg-data-uri'
 import path from 'path'
-import { Config } from '../../config.mjs'
 import { buildCSSFile } from '../css.mjs'
-import { CssPlugin, Plugin } from '../plugin.mjs'
 import { baseRelative } from '../utils.mjs'
 
 export const cssReloadPlugin: Plugin = (config, flags) => {

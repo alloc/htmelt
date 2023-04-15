@@ -1,7 +1,5 @@
-import md5Hex from 'md5-hex'
+import { Config, Flags, md5Hex, Plugin } from '@htmelt/plugin'
 import { buildCSSFile } from '../css.mjs'
-import { Config, Flags } from '../index.mjs'
-import { Plugin } from '../plugin.mjs'
 import { baseRelative } from '../utils.mjs'
 
 /**

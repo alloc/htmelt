@@ -1,10 +1,19 @@
 #!/usr/bin/env node
 
-import { ParentNode } from '@web/parse5-utils'
+import {
+  Config,
+  Entry,
+  Flags,
+  HmrPlugin,
+  md5Hex,
+  ParentNode,
+  Plugin,
+  ScriptReference,
+  ServePlugin,
+} from '@htmelt/plugin'
 import cac from 'cac'
 import * as fs from 'fs'
 import { cyan, red, yellow } from 'kleur/colors'
-import md5Hex from 'md5-hex'
 import mitt, { Emitter } from 'mitt'
 import * as mime from 'mrmime'
 import * as path from 'path'
@@ -13,17 +22,14 @@ import { debounce } from 'ts-debounce'
 import { parse as parseURL } from 'url'
 import * as uuid from 'uuid'
 import * as ws from 'ws'
-import { Config, Entry, WebExtension } from '../config.mjs'
 import { buildClientConnection } from './clientUtils.mjs'
 import { copyFiles } from './copy.mjs'
 import {
   buildEntryScripts,
   compileSeparateEntry,
   findRelativeScripts,
-  RelativeScript,
 } from './esbuild.mjs'
 import { buildHTML, parseHTML } from './html.mjs'
-import { HmrPlugin, Plugin, ServePlugin } from './plugin.mjs'
 import {
   baseRelative,
   createDir,
@@ -47,13 +53,6 @@ cli
 
 cli.parse()
 
-export interface Flags {
-  watch?: boolean
-  minify?: boolean
-  critical?: boolean
-  webext?: WebExtension.RunTarget | WebExtension.RunTarget[]
-}
-
 async function bundle(config: Config, flags: Flags) {
   if (config.deletePrev) {
     fs.rmSync(config.build, { force: true, recursive: true })
@@ -67,7 +66,7 @@ async function bundle(config: Config, flags: Flags) {
 
   type HTMLEntry = {
     document: ParentNode
-    scripts: RelativeScript[]
+    scripts: ScriptReference[]
   }
 
   type ScriptBundle = {

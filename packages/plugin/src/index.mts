@@ -1,14 +1,19 @@
-import { ParentNode } from '@web/parse5-utils'
+import { Attribute, ParentNode } from '@web/parse5-utils'
 import * as esbuild from 'esbuild'
+import 'esbuild-extra/global'
 import * as http from 'http'
-import * as lightningCss from 'lightningcss'
 import { Emitter } from 'mitt'
 import { Promisable } from 'type-fest'
 import { UrlWithStringQuery } from 'url'
-import { Config, WebExtension } from '../config.mjs'
-import { Flags } from './cli.mjs'
-import { RelativeStyle } from './css.mjs'
-import { RelativeScript } from './esbuild.mjs'
+import * as lightningCss from '../types/lightningcss'
+import { Config, WebExtension } from './config.mjs'
+import { Flags } from './flags.mjs'
+
+export * from '@rollup/pluginutils'
+export * from '@web/parse5-utils'
+export { default as md5Hex } from 'md5-hex'
+export * from './config.mjs'
+export * from './flags.mjs'
 
 export interface Plugin {
   (config: Config, flags: Flags): Promisable<PluginInstance>
@@ -16,32 +21,44 @@ export interface Plugin {
 
 export interface PluginInstance {
   cssPlugins?: CssPlugin[]
-  buildEnd?(wasRebuild: boolean): Promisable<void>
-  hmr?(clients: Plugin.ClientSet): Plugin.HmrInstance | void
+  buildEnd?: Plugin.BuildEndHook
+  hmr?: Plugin.HmrHook
   /**
    * Must return `true` if changes are made to the `manifest` object.
    */
-  webext?(manifest: any, webextConfig: WebExtension.Config): Promisable<boolean>
-  serve?(
-    request: Plugin.Request,
-    response: http.ServerResponse
-  ): Promisable<Plugin.VirtualFileData | void>
-  document?(
-    root: ParentNode,
-    file: string,
-    meta: {
-      scripts: RelativeScript[]
-      styles: RelativeStyle[]
-    }
-  ): Promisable<void>
+  webext?: Plugin.WebExtHook
+  serve?: Plugin.ServeHook
+  document?: Plugin.DocumentHook
   /**
    * Called after esbuild has finished bundling the entry scripts found
    * within all of your HTML files.
    */
-  bundles?(bundle: Record<string, Plugin.Bundle>): void
+  bundles?: Plugin.BundlesHook
 }
 
 export namespace Plugin {
+  export type ServeHook = (
+    request: Request,
+    response: http.ServerResponse
+  ) => Promisable<VirtualFileData | void>
+
+  export type DocumentHook = (
+    root: ParentNode,
+    file: string,
+    meta: DocumentMetadata
+  ) => Promisable<void>
+
+  export type BuildEndHook = (wasRebuild: boolean) => Promisable<void>
+
+  export type BundlesHook = (bundle: Record<string, Bundle>) => void
+
+  export type HmrHook = (clients: ClientSet) => HmrInstance | void
+
+  export type WebExtHook = (
+    manifest: any,
+    webextConfig: WebExtension.Config
+  ) => Promisable<boolean>
+
   export interface Request extends http.IncomingMessage, UrlWithStringQuery {
     url: string
     path: string
@@ -91,7 +108,7 @@ export namespace Plugin {
   }
 
   export type VirtualFile =
-    | ((request: Plugin.Request) => Promisable<VirtualFileData | null>)
+    | ((request: Request) => Promisable<VirtualFileData | null>)
     | Promisable<VirtualFileData | null>
 
   export interface Bundle extends esbuild.Metafile {
@@ -115,4 +132,23 @@ export interface HmrPlugin {
 
 export interface CssPlugin {
   visitor: (importer: URL) => lightningCss.Visitor<any> | null
+}
+
+export interface DocumentMetadata {
+  styles: StyleReference[]
+  scripts: ScriptReference[]
+}
+
+export interface StyleReference {
+  readonly node: Element
+  readonly srcAttr: Attribute
+  readonly srcPath: string
+}
+
+export interface ScriptReference {
+  readonly node: Element
+  readonly srcAttr: Attribute
+  readonly srcPath: string
+  readonly outPath: string
+  readonly isModule: boolean
 }

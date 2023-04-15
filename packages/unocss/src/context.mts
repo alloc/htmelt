@@ -1,4 +1,4 @@
-import { createFilter } from '@rollup/pluginutils'
+import { createFilter } from '@htmelt/plugin'
 import type { LoadConfigResult, LoadConfigSource } from '@unocss/config'
 import { loadConfig } from '@unocss/config'
 import type {

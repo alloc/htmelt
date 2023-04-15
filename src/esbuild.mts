@@ -1,9 +1,13 @@
-import { Attribute, Element, getAttribute, ParentNode } from '@web/parse5-utils'
+import {
+  Config,
+  getAttribute,
+  ParentNode,
+  ScriptReference,
+} from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { wrapPlugins } from 'esbuild-extra'
 import { yellow } from 'kleur/colors'
 import * as path from 'path'
-import { Config } from '../config.mjs'
 import importGlobPlugin from './plugins/importGlob/index.mjs'
 import metaUrlPlugin from './plugins/importMetaUrl.mjs'
 import { baseRelative, findExternalScripts } from './utils.mjs'
@@ -29,20 +33,12 @@ export async function compileSeparateEntry(
   return result.outputFiles[0].text
 }
 
-export interface RelativeScript {
-  readonly node: Element
-  readonly srcAttr: Attribute
-  readonly srcPath: string
-  readonly outPath: string
-  readonly isModule: boolean
-}
-
 export function findRelativeScripts(
   document: ParentNode,
   file: string,
   config: Config
 ) {
-  const results: RelativeScript[] = []
+  const results: ScriptReference[] = []
   for (const scriptNode of findExternalScripts(document)) {
     const srcAttr = scriptNode.attrs.find(a => a.name === 'src')
     if (srcAttr?.value.startsWith('./')) {

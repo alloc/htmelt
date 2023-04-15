@@ -1,18 +1,19 @@
 import {
   appendChild,
+  Config,
   createElement,
+  Entry,
   findElement,
   ParentNode,
-} from '@web/parse5-utils'
+  ScriptReference,
+} from '@htmelt/plugin'
 import Critters from 'critters'
 import { writeFile } from 'fs/promises'
 import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
 import { parse, parseFragment, serialize } from 'parse5'
-import { Config, Entry } from '../config.mjs'
 import { injectClientConnection } from './clientUtils.mjs'
 import { buildRelativeStyles, findRelativeStyles } from './css.mjs'
-import { RelativeScript } from './esbuild.mjs'
 import { baseRelative, createDir } from './utils.mjs'
 
 export function parseHTML(html: string) {
@@ -39,7 +40,7 @@ let critters: Critters
 export async function buildHTML(
   entry: Entry,
   document: ParentNode,
-  scripts: RelativeScript[],
+  scripts: ScriptReference[],
   config: Config,
   flags: { watch?: boolean; critical?: boolean }
 ) {

@@ -1,10 +1,10 @@
-import { buildEntryScripts, RelativeScript } from '../esbuild.mjs'
-import { Plugin } from '../plugin.mjs'
+import { Plugin, ScriptReference } from '@htmelt/plugin'
+import { buildEntryScripts } from '../esbuild.mjs'
 import { baseRelative } from '../utils.mjs'
 
 export const liveScriptsPlugin: Plugin = config => {
   const cache: Record<string, Buffer> = {}
-  const documents: Record<string, RelativeScript[]> = {}
+  const documents: Record<string, ScriptReference[]> = {}
   let latestBundles: Plugin.Bundle[]
 
   return {

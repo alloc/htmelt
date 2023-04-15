@@ -1,4 +1,13 @@
-import { createScript, findElement, insertBefore } from '@web/parse5-utils'
+import {
+  Config,
+  createScript,
+  Entry,
+  findElement,
+  Flags,
+  insertBefore,
+  Plugin,
+  WebExtension,
+} from '@htmelt/plugin'
 import chromeRemote from 'chrome-remote-interface'
 import exitHook from 'exit-hook'
 import fs from 'fs'
@@ -6,9 +15,6 @@ import { cyan, red, yellow } from 'kleur/colors'
 import { createRequire } from 'module'
 import path from 'path'
 import { cmd as webExtCmd } from 'web-ext'
-import { Config, Entry, WebExtension } from '../../config.mjs'
-import type { Flags } from '../cli.mjs'
-import { Plugin } from '../plugin.mjs'
 import {
   baseRelative,
   findFreeTcpPort,

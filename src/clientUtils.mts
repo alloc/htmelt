@@ -3,7 +3,7 @@ import {
   createScript,
   findElement,
   ParentNode,
-} from '@web/parse5-utils'
+} from '@htmelt/plugin'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Config } from '../config.mjs'

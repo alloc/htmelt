@@ -1,4 +1,15 @@
-import { findElements, getAttribute, getTagName, Node } from '@web/parse5-utils'
+import {
+  Config,
+  ConfigAPI,
+  findElements,
+  Flags,
+  getAttribute,
+  getTagName,
+  Node,
+  Plugin,
+  ServerConfig,
+  UserConfig,
+} from '@htmelt/plugin'
 import browserslist from 'browserslist'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
 import chokidar from 'chokidar'
@@ -10,9 +21,6 @@ import * as net from 'net'
 import * as path from 'path'
 import { loadConfig } from 'unconfig'
 import { promisify } from 'util'
-import { Config, ConfigAPI, ServerConfig, UserConfig } from '../config.mjs'
-import { Flags } from './cli.mjs'
-import { Plugin } from './plugin.mjs'
 
 const env = JSON.stringify
 

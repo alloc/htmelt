@@ -1,13 +1,13 @@
-import type { Plugin } from '@alloc/html-bundle'
-import type { UserConfig } from '@unocss/core'
-import {
+import type {
   createElement,
   findElement,
   getTagName,
+  md5Hex,
+  Plugin,
   prepend,
   setTextContent,
-} from '@web/parse5-utils'
-import md5Hex from 'md5-hex'
+} from '@htmelt/plugin'
+import type { UserConfig } from '@unocss/core'
 import path from 'path'
 import { createContext } from './context.mjs'
 

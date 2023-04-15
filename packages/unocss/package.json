@@ -11,12 +11,9 @@
     "dist"
   ],
   "dependencies": {
-    "@rollup/pluginutils": "^5.0.2",
+    "@htmelt/plugin": "^0.1.0",
     "@unocss/config": "^0.50.6",
     "@unocss/core": "^0.50.6",
     "md5-hex": "^4.0.0"
-  },
-  "devDependencies": {
-    "@alloc/html-bundle": "workspace:^7.4.1"
   }
 }
