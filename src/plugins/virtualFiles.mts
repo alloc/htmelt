@@ -1,4 +1,4 @@
-import type { Plugin } from '../index.mjs'
+import type { Plugin } from '@htmelt/plugin'
 
 export const virtualFilePlugin: Plugin = config => {
   config.esbuild.plugins ||= []
