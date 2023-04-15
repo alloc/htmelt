@@ -1,0 +1,14 @@
+{
+  "include": ["src"],
+  "references": [{ "path": "src" }, { "path": "src/client" }],
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "outDir": "dist",
+    "sourceMap": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  }
+}
