@@ -124,12 +124,10 @@ importers:
       '@htmelt/plugin': ^0.1.0
       '@unocss/config': ^0.50.6
       '@unocss/core': ^0.50.6
-      md5-hex: ^4.0.0
     dependencies:
       '@htmelt/plugin': link:../plugin
       '@unocss/config': 0.50.6
       '@unocss/core': 0.50.6
-      md5-hex: 4.0.0
 
 packages:
 
