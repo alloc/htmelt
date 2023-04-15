@@ -5,7 +5,8 @@
   "types": "dist/index.d.mts",
   "scripts": {
     "dev": "tsc -p ./ --watch --sourceMap",
-    "build": "tsc -p ./"
+    "build": "rimraf dist && tsc -p ./",
+    "prepublishOnly": "rimraf dist && tsc -p ./"
   },
   "files": [
     "dist"

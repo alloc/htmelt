@@ -8,8 +8,7 @@
   "scripts": {
     "dev": "tsc --build -w",
     "build": "tsc --build",
-    "prepublishOnly": "rimraf dist && tsc --build",
-    "update": "npx npm-check-updates -u && npx typesync && npm i && npm outdated"
+    "prepublishOnly": "rimraf dist && tsc --build"
   },
   "files": [
     "*.{d.ts,d.mts,mjs}",
