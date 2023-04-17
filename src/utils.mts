@@ -128,7 +128,7 @@ export async function loadBundleConfig(flags: Flags) {
     watcher: flags.watch
       ? chokidar.watch(srcDir, {
           ignoreInitial: true,
-          ignored: ['.git', '.DS_Store'],
+          ignored: ['.git', '.DS_Store', ...(userConfig.watchIgnore || [])],
         })
       : undefined,
     watchFiles: userConfig.watchFiles ?? [],

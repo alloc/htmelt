@@ -35,6 +35,12 @@ export type UserConfig = {
    */
   watchFiles?: string[]
   /**
+   * Passed to chokidar's `ignored` option.
+   *
+   * @see https://www.npmjs.com/package/chokidar#path-filtering
+   */
+  watchIgnore?: (string | RegExp)[]
+  /**
    * Compile JS/CSS syntax to be compatible with the browsers that match
    * the given Browserslist query.
    */
@@ -101,7 +107,7 @@ export interface Module {
 }
 
 export type Config = Merge<
-  Required<UserConfig>,
+  Required<Omit<UserConfig, 'watchIgnore'>>,
   ConfigAPI & {
     mode: string
     entries: Entry[]
