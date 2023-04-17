@@ -1,12 +1,12 @@
 import { Attribute, Element, ParentNode } from '@web/parse5-utils'
 import * as esbuild from 'esbuild'
-import 'esbuild-extra/global'
+import 'esbuild-extra/global.js'
 import * as http from 'http'
 import { Emitter } from 'mitt'
 import { Promisable } from 'type-fest'
 import { UrlWithStringQuery } from 'url'
 import * as lightningCss from '../types/lightningcss'
-import { Config, WebExtension } from './config.mjs'
+import { Config, Entry, WebExtension } from './config.mjs'
 import { Flags } from './flags.mjs'
 
 export * from '@rollup/pluginutils'
@@ -81,7 +81,7 @@ export namespace Plugin {
 
   export interface Client extends Emitter<ClientEvents> {
     evaluate: <T = any>(expr: string) => Promise<T>
-    evaluateModule: <T = any>(file: string, args: any[]) => Promise<T>
+    evaluateModule: <T = any>(file: string | URL, args: any[]) => Promise<T>
     getURL: () => Promise<string>
     reload: () => void
   }
@@ -111,14 +111,20 @@ export namespace Plugin {
     | ((request: Request) => Promisable<VirtualFileData | null>)
     | Promisable<VirtualFileData | null>
 
-  export interface Bundle extends esbuild.Metafile {
+  /**
+   * A collection entry `<script>` tags that are bundled together.
+   */
+  export interface Bundle {
     id: string
-    entries: Set<string>
     /**
      * Set this to false in the `bundles` plugin hook if you want to
      * force full reloads when an input file in this bundle is changed.
      */
-    hmr?: boolean
+    hmr: boolean
+    scripts: Set<string>
+    importers: Set<Entry>
+    context: esbuild.BuildContext
+    metafile: esbuild.Metafile
   }
 }
 

@@ -34,18 +34,21 @@ export async function loadBundleConfig(flags: Flags) {
   })
 
   const userConfig = result.config as UserConfig
-  const defaultPlugins: Plugin[] = [
+  const preDefaultPlugins: Plugin[] = [
     await loadPlugin(import('./plugins/virtualFiles.mjs')),
     await loadPlugin(import('./plugins/cssCodeSplit.mjs')),
   ]
+  const postDefaultPlugins: Plugin[] = []
   if (flags.watch) {
-    defaultPlugins.push(
-      await loadPlugin(import('./plugins/cssReload.mjs')),
-      await loadPlugin(import('./plugins/liveScripts.mjs'))
+    preDefaultPlugins.push(
+      await loadPlugin(import('./plugins/cssReload.mjs')) //
+    )
+    postDefaultPlugins.push(
+      await loadPlugin(import('./plugins/devModules.mjs'))
     )
   }
   if (flags.webext || userConfig.webext) {
-    defaultPlugins.push(
+    preDefaultPlugins.push(
       await loadPlugin(import('./plugins/webext.mjs')) //
     )
   }
@@ -63,7 +66,10 @@ export async function loadBundleConfig(flags: Flags) {
     scripts = Array.from(new Set(matches.flat()), p => path.resolve(p))
   }
 
-  const plugins = defaultPlugins.concat(userConfig.plugins || [])
+  const plugins = preDefaultPlugins.concat(
+    userConfig.plugins || [],
+    postDefaultPlugins
+  )
   const browsers = userConfig.browsers ?? '>=0.25%, not dead'
   const server = await loadServerConfig(userConfig.server || {})
 
@@ -100,6 +106,9 @@ export async function loadBundleConfig(flags: Flags) {
       }
       return new URL(id, importer)
     },
+    // Set by the internal ./plugins/devModules.mjs plugin.
+    // Not available during plugin setup.
+    loadDevModule: null!,
   }
 
   const config: Config = {
@@ -115,15 +124,22 @@ export async function loadBundleConfig(flags: Flags) {
     events: new EventEmitter(),
     virtualFiles: {},
     browsers,
+    modules: {},
     watcher: flags.watch
-      ? chokidar.watch(srcDir, { ignoreInitial: true })
+      ? chokidar.watch(srcDir, {
+          ignoreInitial: true,
+          ignored: ['.git', '.DS_Store'],
+        })
       : undefined,
+    watchFiles: userConfig.watchFiles ?? [],
+    fsAllowedDirs: [],
     copy: userConfig.copy ?? [],
     scripts: scripts || [],
     webext: userConfig.webext == true ? {} : userConfig.webext || undefined,
     htmlMinifierTerser: userConfig.htmlMinifierTerser ?? {},
     esbuild: {
       ...userConfig.esbuild,
+      plugins: userConfig.esbuild?.plugins || [],
       target: userConfig.esbuild?.target ?? browserslistToEsbuild(browsers),
       define: {
         ...userConfig.esbuild?.define,
@@ -196,7 +212,8 @@ export function resolveHome(file: string | undefined) {
 }
 
 export function baseRelative(file: string) {
-  return '/' + path.relative(process.cwd(), file)
+  const id = path.relative(process.cwd(), file)
+  return '/' + (id.startsWith('../') ? '@fs' + file : id)
 }
 
 export function relative(from: string, to: string) {
@@ -230,4 +247,33 @@ export function lowercaseKeys<T extends object>(obj: T): T {
     result[key.toLowerCase()] = value
   }
   return result
+}
+
+export function resolveDevMapSources(
+  map: any,
+  root: string,
+  resolveDir: string
+) {
+  let isOutOfRoot: (source: string) => boolean
+  if (path.relative(root, resolveDir).startsWith('..')) {
+    isOutOfRoot = () => true
+  } else {
+    const outOfRootPrefix = path.relative(resolveDir, path.dirname(root))
+    isOutOfRoot = source => source.startsWith(outOfRootPrefix)
+  }
+
+  // This assumes each source is a relative path to the source file.
+  map.sources = map.sources.map((source: string) => {
+    if (isOutOfRoot(source)) {
+      return '/@fs' + path.resolve(resolveDir, source)
+    }
+    return source
+  })
+}
+
+export function isEqualUnordered<T>(a: T[], b: T[]) {
+  if (a.length !== b.length) {
+    return false
+  }
+  return a.every(item => b.includes(item))
 }

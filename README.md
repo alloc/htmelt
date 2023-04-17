@@ -46,7 +46,7 @@ If you want TypeScript to recognize `import.meta.glob` calls, you can add the fo
 {
   "compilerOptions": {
     "lib": ["esnext"],
-    "types": ["@alloc/html-bundle/client.d.ts"]
+    "types": ["htmelt/client.d.ts"]
   }
 }
 ```

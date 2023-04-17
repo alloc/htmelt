@@ -1,7 +1,6 @@
 import type { Plugin } from '@htmelt/plugin'
 
 export const virtualFilePlugin: Plugin = config => {
-  config.esbuild.plugins ||= []
   config.esbuild.plugins.push({
     name: 'virtual-files',
     setup(build) {

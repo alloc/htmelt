@@ -29,7 +29,6 @@ export const unocssPlugin =
       })
     }
 
-    config.esbuild.plugins ||= []
     config.esbuild.plugins.push({
       name: 'unocss:esbuild',
       setup(build) {

@@ -15,21 +15,41 @@ import { baseRelative, findExternalScripts } from './utils.mjs'
 export async function compileSeparateEntry(
   file: string,
   config: Config,
-  format?: esbuild.Format
+  options?: Omit<esbuild.BuildOptions, 'sourcemap' | 'metafile'>
+): Promise<string>
+
+export async function compileSeparateEntry(
+  file: string,
+  config: Config,
+  options?: esbuild.BuildOptions & ({ sourcemap: true } | { metafile: true })
+): Promise<esbuild.BuildResult & { outputFiles: esbuild.OutputFile[] }>
+
+export async function compileSeparateEntry(
+  file: string,
+  config: Config,
+  options: esbuild.BuildOptions = {}
 ) {
   const filePath = decodeURIComponent(new URL(file, import.meta.url).pathname)
 
   const result = await esbuild.build(
     wrapPlugins({
       ...config.esbuild,
+      ...options,
+      format: options.format ?? 'iife',
+      plugins:
+        options.plugins ||
+        config.esbuild.plugins?.filter(p => p.name !== 'dev-exports'),
+      sourcemap:
+        options.sourcemap ?? (config.mode == 'development' ? 'inline' : false),
       bundle: true,
       write: false,
-      format: format ?? 'iife',
       entryPoints: [filePath],
-      sourcemap: config.mode == 'development' ? 'inline' : false,
     })
   )
 
+  if (options.sourcemap === true || options.metafile === true) {
+    return result
+  }
   return result.outputFiles[0].text
 }
 
@@ -65,7 +85,7 @@ export function buildEntryScripts(
   for (const srcPath of scripts) {
     console.log(yellow('⌁'), baseRelative(srcPath))
   }
-  return esbuild.build(
+  return esbuild.context(
     wrapPlugins({
       format: 'esm',
       charset: 'utf8',
@@ -79,7 +99,7 @@ export function buildEntryScripts(
       write: flags.write != false,
       bundle: true,
       splitting: true,
-      treeShaking: true,
+      treeShaking: !flags.watch,
       plugins: [
         ...(config.esbuild.plugins || []),
         metaUrlPlugin(),

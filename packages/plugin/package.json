@@ -4,7 +4,7 @@
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "scripts": {
-    "dev": "tsc -p ./ --watch --sourceMap",
+    "dev": "tsc -p ./ --watch --sourceMap --declarationMap",
     "build": "rimraf dist && tsc -p ./",
     "prepublishOnly": "rimraf dist && tsc -p ./"
   },
@@ -15,7 +15,7 @@
     "@rollup/pluginutils": "^5.0.2",
     "@web/parse5-utils": "^1.3.0",
     "esbuild": "^0.17.12",
-    "esbuild-extra": "^0.1.3",
+    "esbuild-extra": "^0.1.9",
     "md5-hex": "^4.0.0",
     "mitt": "^3.0.0",
     "type-fest": "^3.6.0"

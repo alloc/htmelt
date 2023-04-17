@@ -33,7 +33,6 @@ export const cssCodeSplit: Plugin = (config, flags) => {
       )
     },
   }
-  config.esbuild.plugins ||= []
   config.esbuild.plugins.push(esbuildPlugin)
   return {}
 }

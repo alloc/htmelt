@@ -473,7 +473,10 @@ async function refreshOnRebuild(
     // Ensure not all tabs will be closed as a result of the extension
     // being reloaded, since that will cause an unsightly reopening of
     // the browser window.
-    config.events.on('will-rebuild', async () => {
+    config.events.on('will-rebuild', async ({ isFullReload }) => {
+      if (!isFullReload) {
+        return
+      }
       const extOrigin = extProtocol + '//' + uuid
       const pages = (await chromeRemote.List({ port })).filter(
         tab => tab.type == 'page'
@@ -493,7 +496,11 @@ async function refreshOnRebuild(
     })
   }
 
-  config.events.on('rebuild', async () => {
+  config.events.on('rebuild', async ({ isFullReload }) => {
+    if (!isFullReload) {
+      return
+    }
+
     const extOrigin = extProtocol + '//' + uuid
 
     if (!uuid) {
