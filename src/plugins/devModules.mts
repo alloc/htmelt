@@ -136,7 +136,6 @@ export const devModulesPlugin: Plugin = async config => {
     resolveDevMapSources(map, process.cwd(), sourceRoot)
     map.sourceRoot = undefined
 
-    console.log('loadDevModule:', entry, map.sources)
     return appendInlineSourceMap(jsFile.text, map)
   }
 

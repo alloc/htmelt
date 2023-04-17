@@ -335,7 +335,6 @@ function registerLinkedPackages(watcher: FSWatcher, fsAllowedDirs: string[]) {
       resolvedDependencyDir !== dependencyDir &&
       path.relative(process.cwd(), resolvedDependencyDir).startsWith('..')
     ) {
-      console.log('linked dep:', name, '->', resolvedDependencyDir)
       fsAllowedDirs.push(resolvedDependencyDir)
       watcher.add(resolvedDependencyDir)
     }
