@@ -12,8 +12,8 @@
     "dist"
   ],
   "dependencies": {
-    "@htmelt/plugin": "^0.1.0",
-    "@unocss/config": "^0.50.6",
-    "@unocss/core": "^0.50.6"
+    "@htmelt/plugin": "workspace:^0.1.2",
+    "@unocss/config": "^0.50.8",
+    "@unocss/core": "^0.50.8"
   }
 }
