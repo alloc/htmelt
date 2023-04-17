@@ -13,7 +13,7 @@
   "files": [
     "*.{d.ts,d.mts,mjs}",
     "dist",
-    "!dist/*.tsbuildinfo"
+    "!dist/**/*.tsbuildinfo"
   ],
   "repository": {
     "type": "git",

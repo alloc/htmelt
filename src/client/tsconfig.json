@@ -8,7 +8,6 @@
     "target": "esnext",
     "types": [],
     "outDir": "../../dist/client",
-    "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
