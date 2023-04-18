@@ -2,10 +2,9 @@ import {
   appendChild,
   Config,
   createElement,
-  Entry,
   findElement,
   ParentNode,
-  ScriptReference,
+  Plugin,
 } from '@htmelt/plugin'
 import Critters from 'critters'
 import { writeFile } from 'fs/promises'
@@ -13,7 +12,7 @@ import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
 import { parse, parseFragment, serialize } from 'parse5'
 import { injectClientConnection } from './clientUtils.mjs'
-import { buildRelativeStyles, findRelativeStyles } from './css.mjs'
+import { buildRelativeStyles } from './css.mjs'
 import { baseRelative, createDir } from './utils.mjs'
 
 export function parseHTML(html: string) {
@@ -38,36 +37,31 @@ export function parseHTML(html: string) {
 let critters: Critters
 
 export async function buildHTML(
-  entry: Entry,
-  document: ParentNode,
-  scripts: ScriptReference[],
+  document: Plugin.Document,
   config: Config,
   flags: { watch?: boolean; critical?: boolean }
 ) {
-  console.log(yellow('⌁'), baseRelative(entry.file))
-
-  const outFile = config.getBuildPath(entry.file)
-  const styles = findRelativeStyles(document, entry.file)
+  console.log(yellow('⌁'), baseRelative(document.file))
+  const outFile = config.getBuildPath(document.file)
   try {
-    await buildRelativeStyles(styles, config, flags)
+    await buildRelativeStyles(document.styles, config, flags)
   } catch (e) {
     console.error(e)
     return
   }
 
-  const meta = { scripts, styles }
   for (const plugin of config.plugins) {
     const hook = plugin.document
     if (hook) {
-      await hook(document, entry.file, meta)
+      await hook(document)
     }
   }
 
-  if (flags.watch && entry.hmr != false) {
-    injectClientConnection(document, outFile, config)
+  if (flags.watch && document.hmr != false) {
+    injectClientConnection(document.documentElement, outFile, config)
   }
 
-  let html = serialize(document)
+  let html = serialize(document.documentElement)
 
   if (!flags.watch) {
     try {

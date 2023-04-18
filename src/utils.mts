@@ -13,7 +13,6 @@ import {
 import browserslist from 'browserslist'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
 import chokidar from 'chokidar'
-import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import { mkdir } from 'fs/promises'
 import glob from 'glob'
@@ -42,9 +41,12 @@ export async function loadBundleConfig(flags: Flags) {
   const postDefaultPlugins: Plugin[] = []
   if (flags.watch) {
     preDefaultPlugins.push(
-      await loadPlugin(import('./plugins/cssReload.mjs')) //
+      await loadPlugin(
+        import('./plugins/cssReload.mjs') //
+      )
     )
     postDefaultPlugins.push(
+      await loadPlugin(import('./plugins/liveBundles.mjs')),
       await loadPlugin(import('./plugins/devModules.mjs'))
     )
   }
@@ -100,7 +102,10 @@ export async function loadBundleConfig(flags: Flags) {
       if (file.startsWith(src)) {
         file = file.replace(src, config.build + '/')
       } else {
-        file = path.join(config.build, file)
+        file = path.join(
+          config.build,
+          file.startsWith('..') ? path.basename(file) : file
+        )
       }
       if (wasAbsolute) {
         file = path.join(process.cwd(), file)
@@ -138,7 +143,7 @@ export async function loadBundleConfig(flags: Flags) {
     src: srcDir,
     entries,
     plugins: [],
-    events: new EventEmitter(),
+    bundles: undefined!,
     virtualFiles: {},
     browsers,
     modules: undefined,
@@ -292,11 +297,16 @@ export function resolveDevMapSources(
   })
 }
 
-export function isEqualUnordered<T>(a: T[], b: T[]) {
-  if (a.length !== b.length) {
+export function setsEqual<T>(a: Set<T>, b: Set<T>) {
+  if (a.size !== b.size) {
     return false
   }
-  return a.every(item => b.includes(item))
+  for (const item of a) {
+    if (!b.has(item)) {
+      return false
+    }
+  }
+  return true
 }
 
 // This function adds all linked packages to the watcher

@@ -2,13 +2,10 @@
 
 import {
   Config,
-  Entry,
   Flags,
   HmrPlugin,
   md5Hex,
-  ParentNode,
   Plugin,
-  ScriptReference,
   ServePlugin,
 } from '@htmelt/plugin'
 import cac from 'cac'
@@ -25,6 +22,7 @@ import * as uuid from 'uuid'
 import * as ws from 'ws'
 import { buildClientConnection } from './clientUtils.mjs'
 import { copyFiles } from './copy.mjs'
+import { buildRelativeStyles, findRelativeStyles } from './css.mjs'
 import {
   buildEntryScripts,
   compileSeparateEntry,
@@ -34,10 +32,10 @@ import { buildHTML, parseHTML } from './html.mjs'
 import {
   baseRelative,
   createDir,
-  isEqualUnordered,
   loadBundleConfig,
   lowercaseKeys,
   resolveDevMapSources,
+  setsEqual,
 } from './utils.mjs'
 
 const cli = cac('htmelt')
@@ -56,17 +54,11 @@ cli
 
 cli.parse()
 
-type EntryMetadata = {
-  document: ParentNode
-  scripts: ScriptReference[]
-  bundle: ScriptBundle
-}
-
-type ScriptBundle = {
+type PartialBundle = {
   id: string
   hmr: boolean
   scripts: Set<string>
-  importers: Set<Entry>
+  importers: Plugin.Document[]
   context?: esbuild.BuildContext
   metafile?: esbuild.Metafile
 }
@@ -76,102 +68,158 @@ async function bundle(config: Config, flags: Flags) {
     fs.rmSync(config.build, { force: true, recursive: true })
   }
 
-  const scriptBundles = new Map<string, ScriptBundle>()
-
   let server: import('http').Server | undefined
   if (flags.watch) {
     const servePlugins = config.plugins.filter(p => p.serve) as ServePlugin[]
-    server = await installHttpServer(config, servePlugins, scriptBundles)
+    server = await installHttpServer(config, servePlugins)
   }
 
-  const build = async () => {
-    const htmlEntries = new Map<Entry, EntryMetadata>()
-    const scriptEntriesByBundle = new Map<ScriptBundle, string[]>()
+  const createBuild = () => {
+    const bundles = new Map<string, PartialBundle>()
+    const documents: Record<string, Plugin.Document> = {}
 
-    const seen = new Set<string>()
-    for (const entry of config.entries) {
-      const { file, bundleId = 'default' } = entry
-
-      const key = `${file}:${bundleId}`
-      if (seen.has(key)) continue
-      seen.add(key)
-
-      let bundle = scriptBundles.get(bundleId)
-      if (!bundle) {
-        bundle = {
-          id: bundleId,
-          hmr: true,
-          scripts: new Set(),
-          importers: new Set(),
-        }
-        scriptBundles.set(bundleId, bundle)
-      } else if (!scriptEntriesByBundle.has(bundle)) {
-        scriptEntriesByBundle.set(bundle, [...bundle.scripts])
-        bundle.scripts.clear()
-        bundle.hmr = true
-      }
-
-      if (entry.hmr == false) {
-        bundle.hmr = false
-      }
-
-      if (file.endsWith('.html')) {
-        const html = fs.readFileSync(file, 'utf8')
-        const document = parseHTML(html)
-        const scripts = findRelativeScripts(document, file, config)
-        htmlEntries.set(entry, { document, scripts, bundle })
-        bundle.importers.add(entry)
-        for (const script of scripts) {
-          bundle.scripts.add(script.srcPath)
-        }
-      } else if (/\.[mc]?[tj]sx?$/.test(file)) {
-        bundle.scripts.add(path.resolve(file))
-      } else {
-        console.warn(red('⚠'), 'unsupported entry type:', file)
-      }
+    const loadDocument = (file: string) => {
+      const html = fs.readFileSync(file, 'utf8')
+      const documentElement = parseHTML(html)
+      const scripts = findRelativeScripts(documentElement, file, config)
+      const styles = findRelativeStyles(documentElement, file)
+      return { documentElement, scripts, styles }
     }
 
-    await Promise.all([
-      Promise.all(
-        Array.from(scriptBundles, async ([bundleId, bundle]) => {
-          const oldEntries = scriptEntriesByBundle.get(bundle)
-          const newEntries = [...bundle.scripts]
-          if (!bundle.context || isEqualUnordered(oldEntries!, newEntries)) {
-            bundle.context = await buildEntryScripts(newEntries, config, flags)
-          }
-
-          const { metafile } = await bundle.context!.rebuild()
-          bundle.metafile = metafile!
-
-          return [bundleId, bundle as Plugin.Bundle] as const
-        })
+    const buildScripts = async (bundle: PartialBundle) => {
+      const oldEntries = bundle.scripts
+      const newEntries = new Set(
+        bundle.importers.flatMap(document =>
+          document.scripts.map(script => script.srcPath)
+        )
       )
-        .then(Object.fromEntries<Plugin.Bundle>)
-        .then(bundles => {
-          for (const plugin of config.plugins) {
-            plugin.bundles?.(bundles)
-          }
-        }),
-      ...Array.from(htmlEntries, ([entry, { document, scripts, bundle }]) =>
-        buildHTML(entry, document, scripts, config, flags)
-      ),
-      ...config.scripts.map(async entry => {
-        console.log(yellow('⌁'), baseRelative(entry))
-        return compileSeparateEntry(entry, config).then(async code => {
-          const outFile = config.getBuildPath(entry)
-          await createDir(outFile)
-          fs.writeFileSync(outFile, code)
-        })
-      }),
-    ])
 
-    if (config.copy) {
-      await copyFiles(config.copy, config)
+      if (!bundle.context || !setsEqual(oldEntries, newEntries)) {
+        bundle.scripts = newEntries
+        bundle.context = await buildEntryScripts([...newEntries], config, flags)
+      }
+
+      const { metafile } = await bundle.context!.rebuild()
+      bundle.metafile = metafile!
+    }
+
+    return {
+      initialBuild: (async () => {
+        const seen = new Set<string>()
+
+        for (const entry of config.entries) {
+          let { file, bundleId = 'default' } = entry
+          file = path.resolve(file)
+
+          const key = `${file}:${bundleId}`
+          if (seen.has(key)) continue
+          seen.add(key)
+
+          let bundle = bundles.get(bundleId)
+          if (!bundle) {
+            bundle = {
+              id: bundleId,
+              hmr: true,
+              scripts: new Set(),
+              importers: [],
+            }
+            bundles.set(bundleId, bundle)
+          }
+
+          if (entry.hmr == false) {
+            bundle.hmr = false
+          }
+
+          if (file.endsWith('.html')) {
+            const document: Plugin.Document = {
+              ...entry,
+              ...loadDocument(file),
+              file,
+              bundle: bundle as Plugin.Bundle,
+            }
+            const uri = baseRelative(file)
+            documents[uri] = document
+            bundle.importers.push(document)
+          } else if (/\.[mc]?[tj]sx?$/.test(file)) {
+            bundle.scripts.add(file)
+          } else {
+            console.warn(red('⚠'), 'unsupported entry type:', file)
+          }
+        }
+
+        await Promise.all([
+          Promise.all(
+            Array.from(bundles, async ([bundleId, bundle]) => {
+              await buildScripts(bundle)
+              return [bundleId, bundle as Plugin.Bundle] as const
+            })
+          )
+            .then(Object.fromEntries<Plugin.Bundle>)
+            .then(bundles => {
+              config.bundles = bundles
+              for (const plugin of config.plugins) {
+                plugin.bundles?.(bundles)
+              }
+            }),
+          ...Object.values(documents).map(document =>
+            buildHTML(document, config, flags)
+          ),
+          ...config.scripts.map(async entry => {
+            console.log(yellow('⌁'), baseRelative(entry))
+            return compileSeparateEntry(entry, config).then(async code => {
+              const outFile = config.getBuildPath(entry)
+              await createDir(outFile)
+              fs.writeFileSync(outFile, code)
+            })
+          }),
+        ])
+
+        if (config.copy) {
+          await copyFiles(config.copy, config)
+        }
+
+        for (const plugin of config.plugins) {
+          if (plugin.initialBuild) {
+            await plugin.initialBuild()
+          }
+        }
+      })(),
+      async rebuildHTML(uri: string) {
+        const document = documents[uri]
+        if (!document) {
+          // Skip HTML files not listed in `config.entries`
+          return
+        }
+
+        const file = uri.startsWith('/@fs/')
+          ? uri.slice(4)
+          : path.join(process.cwd(), uri)
+
+        const oldScripts = document.scripts
+        Object.assign(document, loadDocument(file))
+
+        await Promise.all([
+          buildHTML(document, config, flags),
+          (oldScripts.length !== document.scripts.length ||
+            oldScripts.some(
+              (script, i) => script.srcPath !== document.scripts[i].srcPath
+            )) &&
+            buildScripts(document.bundle),
+        ])
+      },
+      async rebuildStyles() {
+        await Promise.all(
+          Object.values(documents).map(document =>
+            buildRelativeStyles(document.styles, config, flags)
+          )
+        )
+      },
     }
   }
 
   const timer = performance.now()
-  await (config.lastBuild = build())
+  const build = createBuild()
+  await (config.lastBuild = build.initialBuild)
   console.log(
     cyan('build complete in %sms'),
     (performance.now() - timer).toFixed(2)
@@ -179,11 +227,6 @@ async function bundle(config: Config, flags: Flags) {
 
   if (flags.watch) {
     await buildClientConnection(config)
-  }
-
-  for (const plugin of config.plugins) {
-    if (!plugin.buildEnd) continue
-    await plugin.buildEnd(false)
   }
 
   if (server) {
@@ -198,7 +241,8 @@ async function bundle(config: Config, flags: Flags) {
     )
 
     const watcher = config.watcher!
-    const changedFiles = new Set<string>()
+    const changedModules = new Set<string>()
+    const changedPages = new Set<string>()
 
     // TODO: track failed module resolutions and only rebuild if a file
     // is added that matches one of them.
@@ -207,15 +251,21 @@ async function bundle(config: Config, flags: Flags) {
       console.log(cyan('+'), file)
     })*/
 
-    watcher.on('change', async file => {
+    watcher.on('change', file => {
       file = baseRelative(path.resolve(file))
-      if (file in config.modules!) {
-        changedFiles.add(file)
-        await requestRebuild()
+      if (file.endsWith('.html')) {
+        console.log(cyan('↺'), file)
+        changedPages.add(file)
+        requestRebuild()
+      } else {
+        if (file.endsWith('.css') || file in config.modules!) {
+          changedModules.add(file)
+          requestRebuild()
+        }
       }
     })
 
-    watcher.on('unlink', async file => {
+    watcher.on('unlink', file => {
       // Absolute files are typically not added to the build directory.
       if (path.isAbsolute(file)) {
         return
@@ -241,63 +291,68 @@ async function bundle(config: Config, flags: Flags) {
     const rebuild = async () => {
       console.clear()
 
-      let isFullReload = false
-      const fullReloadFiles = new Set<string>()
-      for (const bundle of scriptBundles.values()) {
-        if (!bundle.hmr) {
-          for (const srcPath in bundle.metafile!.inputs) {
-            fullReloadFiles.add(srcPath)
-          }
-        }
-      }
+      let isFullReload = changedPages.size > 0
+      let stylesChanged = false
 
       const acceptedFiles = new Map<Plugin.HmrInstance, string[]>()
-      accept: for (let file of changedFiles) {
-        console.log(cyan('↺'), file)
-        if (fullReloadFiles.has(file)) {
+      if (!isFullReload) {
+        const fullReloadFiles = new Set<string>()
+        for (const bundle of Object.values(config.bundles)) {
+          if (!bundle.hmr) {
+            for (const file in bundle.metafile.inputs) {
+              fullReloadFiles.add(
+                file.startsWith('..') ? '/@fs' + path.resolve(file) : '/' + file
+              )
+            }
+          }
+        }
+        accept: for (let file of changedModules) {
+          console.log(cyan('↺'), file)
+          if (fullReloadFiles.has(file)) {
+            isFullReload = true
+            break
+          }
+          for (const hmr of hmrInstances) {
+            if (hmr.accept(file)) {
+              let files = acceptedFiles.get(hmr)
+              if (!files) {
+                acceptedFiles.set(hmr, (files = []))
+              }
+              files.push(file)
+              continue accept
+            }
+          }
+          if (file.endsWith('.css')) {
+            stylesChanged = true
+          }
           isFullReload = true
           break
         }
-        for (const hmr of hmrInstances) {
-          if (hmr.accept(file)) {
-            let files = acceptedFiles.get(hmr)
-            if (!files) {
-              acceptedFiles.set(hmr, (files = []))
-            }
-            files.push(file)
-            continue accept
-          }
+        if (isFullReload) {
+          acceptedFiles.clear()
         }
-        isFullReload = true
-        break
       }
 
-      changedFiles.clear()
-      await Promise.all(
-        Array.from(acceptedFiles, ([hmr, files]) => hmr.update(files))
-      )
+      const htmlRebuildPromises = Array.from(changedPages, build.rebuildHTML)
 
-      try {
-        config.events.emit('will-rebuild', { isFullReload })
-        const timer = performance.now()
-        await build()
-        config.events.emit('rebuild', { isFullReload })
+      changedModules.clear()
+      changedPages.clear()
 
+      await Promise.all([
+        ...Array.from(acceptedFiles, ([hmr, files]) => hmr.update(files)),
+        ...htmlRebuildPromises,
+        // Rebuild all styles if a .css file is changed and no .html
+        // files were also changed.
+        !changedPages.size && stylesChanged && build.rebuildStyles(),
+      ])
+
+      if (isFullReload) {
         for (const plugin of config.plugins) {
-          if (!plugin.buildEnd) continue
-          await plugin.buildEnd(true)
+          if (plugin.fullReload) {
+            await plugin.fullReload()
+          }
         }
-
-        console.log(
-          cyan('build complete in %sms'),
-          (performance.now() - timer).toFixed(2)
-        )
-
-        if (isFullReload) {
-          await Promise.all(Array.from(clients, client => client.reload()))
-        }
-      } catch (e: any) {
-        console.error(e)
+        await Promise.all(Array.from(clients, client => client.reload()))
       }
 
       console.log(yellow('watching files...'))
@@ -307,11 +362,7 @@ async function bundle(config: Config, flags: Flags) {
   }
 }
 
-async function installHttpServer(
-  config: Config,
-  servePlugins: ServePlugin[],
-  scriptBundles: Map<string, ScriptBundle>
-) {
+async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
   let createServer: typeof import('http').createServer
   let serverOptions: import('https').ServerOptions | undefined
   if (config.server.https) {
@@ -335,9 +386,6 @@ async function installHttpServer(
   const server = createServer(serverOptions, async (req, response) => {
     const request = Object.assign(req, parseURL(req.url!)) as Plugin.Request
     request.searchParams = new URLSearchParams(request.search || '')
-
-    scriptBundles
-    await config.lastBuild
 
     let file: Plugin.VirtualFileData | null = null
     for (const plugin of servePlugins) {

@@ -73,8 +73,11 @@ export const unocssPlugin =
     })
 
     return {
-      async document(root, file) {
-        const headTag = findElement(root, node => getTagName(node) === 'head')
+      async document({ file, documentElement }) {
+        const headTag = findElement(
+          documentElement,
+          node => getTagName(node) === 'head'
+        )
         if (!headTag) {
           throw Error('No <head> tag found in document: ' + file)
         }

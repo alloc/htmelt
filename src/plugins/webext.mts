@@ -14,6 +14,7 @@ import fs from 'fs'
 import { cyan, red, yellow } from 'kleur/colors'
 import { createRequire } from 'module'
 import path from 'path'
+import { Promisable } from 'type-fest'
 import { cmd as webExtCmd } from 'web-ext'
 import {
   baseRelative,
@@ -21,6 +22,10 @@ import {
   resolveHome,
   toArray,
 } from '../utils.mjs'
+
+type InternalEvents = {
+  reload: (() => Promisable<void>)[]
+}
 
 export const webextPlugin: Plugin = async (config, flags) => {
   const webextConfig = config.webext!
@@ -57,8 +62,12 @@ export const webextPlugin: Plugin = async (config, flags) => {
     }
   }
 
+  const events: InternalEvents = {
+    reload: [],
+  }
+
   return {
-    async buildEnd() {
+    async initialBuild() {
       if (!flags.watch) {
         // Pack the web extension for distribution.
         await enableWebExtension(
@@ -70,9 +79,14 @@ export const webextPlugin: Plugin = async (config, flags) => {
         )
       }
     },
-    document(root) {
+    async fullReload() {
+      for (const handler of events.reload) {
+        await handler()
+      }
+    },
+    document({ documentElement }) {
       if (webextConfig.polyfill) {
-        const head = findElement(root, e => e.tagName == 'head')!
+        const head = findElement(documentElement, e => e.tagName == 'head')!
         const polyfillScript = createScript({
           src: path.join('/', config.build, 'browser-polyfill.js'),
         })
@@ -86,7 +100,8 @@ export const webextPlugin: Plugin = async (config, flags) => {
         manifest,
         config,
         flags,
-        clients
+        clients,
+        events
       ).catch(console.error)
 
       clients.on('connect', ({ client }) => {
@@ -325,7 +340,8 @@ async function enableWebExtension(
   manifest: any,
   config: Config,
   flags: Flags,
-  clients?: Plugin.ClientSet
+  clients?: Plugin.ClientSet,
+  events?: InternalEvents
 ) {
   const artifactsDir =
     webextConfig.artifactsDir || path.join(process.cwd(), 'web-ext-artifacts')
@@ -391,6 +407,7 @@ async function enableWebExtension(
         runner,
         config,
         clients!,
+        events!,
         manifest,
         tabs,
         port
@@ -421,6 +438,7 @@ async function refreshOnRebuild(
   runner: import('web-ext').MultiExtensionRunner,
   config: Config,
   clients: Plugin.ClientSet,
+  events: InternalEvents,
   manifest: any,
   tabs: string[],
   firefoxPort?: number
@@ -473,10 +491,7 @@ async function refreshOnRebuild(
     // Ensure not all tabs will be closed as a result of the extension
     // being reloaded, since that will cause an unsightly reopening of
     // the browser window.
-    config.events.on('will-rebuild', async ({ isFullReload }) => {
-      if (!isFullReload) {
-        return
-      }
+    events.reload.push(async () => {
       const extOrigin = extProtocol + '//' + uuid
       const pages = (await chromeRemote.List({ port })).filter(
         tab => tab.type == 'page'
@@ -496,11 +511,7 @@ async function refreshOnRebuild(
     })
   }
 
-  config.events.on('rebuild', async ({ isFullReload }) => {
-    if (!isFullReload) {
-      return
-    }
-
+  events.reload.push(async () => {
     const extOrigin = extProtocol + '//' + uuid
 
     if (!uuid) {

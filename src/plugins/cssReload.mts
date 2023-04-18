@@ -25,7 +25,7 @@ export const cssReloadPlugin: Plugin = (config, flags) => {
 
   return {
     cssPlugins: [inlineSvgUrls(config)],
-    document(_root, _file, { styles }) {
+    document({ styles }) {
       const buildPrefix = '/' + config.build + '/'
       styles.forEach(style => {
         const srcAttr = style.srcAttr.value

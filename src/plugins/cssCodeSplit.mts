@@ -84,8 +84,11 @@ const injectStyleTag = (id: string, css: string) => {
 // This version adds a `data-href` attribute to the style tag, which is
 // used by the HMR client to update the style tag.
 const injectStyleTag_DEV = (id: string, css: string, href: string) => {
-  if (!document.getElementById(id)) {
-    const style = document.createElement('style')
+  let style = document.getElementById(id)
+  if (style) {
+    style.textContent = css
+  } else {
+    style = document.createElement('style')
     style.id = id
     style.textContent = css
     style.dataset.href = href

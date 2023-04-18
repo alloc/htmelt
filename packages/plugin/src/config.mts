@@ -1,6 +1,5 @@
 import * as chokidar from 'chokidar'
 import * as esbuild from 'esbuild'
-import { EventEmitter } from 'events'
 import { Merge } from 'type-fest'
 import * as htmlMinifierTerser from '../types/html-minifier-terser'
 import * as lightningCss from '../types/lightningcss'
@@ -112,7 +111,6 @@ export type Config = Merge<
     mode: string
     entries: Entry[]
     plugins: PluginInstance[]
-    events: EventEmitter
     esbuild: esbuild.BuildOptions & {
       plugins: esbuild.Plugin[]
       define: Record<string, string>
@@ -125,6 +123,13 @@ export type Config = Merge<
 
     /** Resolved when the most recent build is completed. */
     lastBuild?: Promise<void>
+
+    /**
+     * Every script bundle by its ID.
+     *
+     * Exists after the initial build is completed.
+     */
+    bundles: Readonly<Record<string, Plugin.Bundle>>
 
     /** The dev server's URL, port number, and HTTPS credentials. */
     server: {

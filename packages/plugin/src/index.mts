@@ -20,20 +20,21 @@ export interface Plugin {
 }
 
 export interface PluginInstance {
-  cssPlugins?: CssPlugin[]
-  buildEnd?: Plugin.BuildEndHook
-  hmr?: Plugin.HmrHook
-  /**
-   * Must return `true` if changes are made to the `manifest` object.
-   */
-  webext?: Plugin.WebExtHook
-  serve?: Plugin.ServeHook
-  document?: Plugin.DocumentHook
   /**
    * Called after esbuild has finished bundling the entry scripts found
    * within all of your HTML files.
    */
   bundles?: Plugin.BundlesHook
+  cssPlugins?: CssPlugin[]
+  document?: Plugin.DocumentHook
+  hmr?: Plugin.HmrHook
+  initialBuild?: Plugin.InitialBuildHook
+  fullReload?: Plugin.FullReloadHook
+  serve?: Plugin.ServeHook
+  /**
+   * Must return `true` if changes are made to the `manifest` object.
+   */
+  webext?: Plugin.WebExtHook
 }
 
 export namespace Plugin {
@@ -42,13 +43,11 @@ export namespace Plugin {
     response: http.ServerResponse
   ) => Promisable<VirtualFileData | void>
 
-  export type DocumentHook = (
-    root: ParentNode,
-    file: string,
-    meta: DocumentMetadata
-  ) => Promisable<void>
+  export type DocumentHook = (document: Document) => Promisable<void>
 
-  export type BuildEndHook = (wasRebuild: boolean) => Promisable<void>
+  export type InitialBuildHook = () => Promisable<void>
+
+  export type FullReloadHook = () => Promisable<void>
 
   export type BundlesHook = (bundle: Record<string, Bundle>) => void
 
@@ -71,7 +70,7 @@ export namespace Plugin {
      * Return true to prevent full reload.
      */
     accept(file: string): boolean | void
-    update(files: string[]): Promise<void>
+    update(files: string[]): Promisable<void>
   }
 
   export interface ClientSet extends ReadonlySet<Client> {
@@ -111,6 +110,13 @@ export namespace Plugin {
     | ((request: Request) => Promisable<VirtualFileData | null>)
     | Promisable<VirtualFileData | null>
 
+  export interface Document extends Entry {
+    documentElement: ParentNode
+    scripts: ScriptReference[]
+    styles: StyleReference[]
+    bundle: Bundle
+  }
+
   /**
    * A collection entry `<script>` tags that are bundled together.
    */
@@ -122,7 +128,7 @@ export namespace Plugin {
      */
     hmr: boolean
     scripts: Set<string>
-    importers: Set<Entry>
+    importers: Document[]
     context: esbuild.BuildContext
     metafile: esbuild.Metafile
   }
@@ -138,11 +144,6 @@ export interface HmrPlugin {
 
 export interface CssPlugin {
   visitor: (importer: URL) => lightningCss.Visitor<any> | null
-}
-
-export interface DocumentMetadata {
-  styles: StyleReference[]
-  scripts: ScriptReference[]
 }
 
 export interface StyleReference {
