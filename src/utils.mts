@@ -14,6 +14,7 @@ import browserslist from 'browserslist'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
 import chokidar from 'chokidar'
 import { EventEmitter } from 'events'
+import * as fs from 'fs'
 import { mkdir } from 'fs/promises'
 import glob from 'glob'
 import * as lightningCss from 'lightningcss'
@@ -83,7 +84,9 @@ export async function loadBundleConfig(flags: Flags) {
         ignored = ignored.concat(options.ignored)
       }
       return chokidar.watch(paths, {
+        atomic: true,
         ignoreInitial: true,
+        ignorePermissionErrors: true,
         ...options,
         ignored,
       })
@@ -141,12 +144,11 @@ export async function loadBundleConfig(flags: Flags) {
     modules: undefined,
     watcher: undefined,
     watchIgnore: [
-      'node_modules',
-      '.git',
-      '.DS_Store',
+      '**/{node_modules,.git,.DS_Store}',
       ...(userConfig.watchIgnore || []),
     ],
-    fsAllowedDirs: [],
+    linkedPackages: flags.watch ? findLinkedPackages(process.cwd()) : undefined,
+    fsAllowedDirs: new Set(),
     copy: userConfig.copy ?? [],
     scripts: scripts || [],
     webext: userConfig.webext == true ? {} : userConfig.webext || undefined,
@@ -295,4 +297,45 @@ export function isEqualUnordered<T>(a: T[], b: T[]) {
     return false
   }
   return a.every(item => b.includes(item))
+}
+
+// This function adds all linked packages to the watcher
+// so that the watcher will detect changes in these packages.
+function findLinkedPackages(root: string, linkedPackages = new Set<string>()) {
+  const nodeModulesDir = path.join(root, 'node_modules')
+  try {
+    const nodeModules = fs
+      .readdirSync(nodeModulesDir)
+      .flatMap(name =>
+        name[0] === '@'
+          ? fs
+              .readdirSync(path.join(nodeModulesDir, name))
+              .map(scopedName => path.join(name, scopedName))
+          : name
+      )
+
+    // Do a breadth-first search for linked packages.
+    const queue: string[] = []
+    for (const name of nodeModules) {
+      const dependencyDir = path.join(nodeModulesDir, name)
+      const resolvedDependencyDir = fs.realpathSync(dependencyDir)
+      if (
+        resolvedDependencyDir !== dependencyDir &&
+        !resolvedDependencyDir.includes('node_modules') &&
+        !linkedPackages.has(resolvedDependencyDir) &&
+        path.relative(root, resolvedDependencyDir).startsWith('..')
+      ) {
+        queue.push(resolvedDependencyDir)
+        linkedPackages.add(resolvedDependencyDir)
+      }
+    }
+    for (const root of queue) {
+      findLinkedPackages(root, linkedPackages)
+    }
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      throw error
+    }
+  }
+  return linkedPackages
 }

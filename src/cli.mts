@@ -12,7 +12,6 @@ import {
   ServePlugin,
 } from '@htmelt/plugin'
 import cac from 'cac'
-import { FSWatcher } from 'chokidar'
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import { cyan, red, yellow } from 'kleur/colors'
@@ -57,33 +56,33 @@ cli
 
 cli.parse()
 
+type EntryMetadata = {
+  document: ParentNode
+  scripts: ScriptReference[]
+  bundle: ScriptBundle
+}
+
+type ScriptBundle = {
+  id: string
+  hmr: boolean
+  scripts: Set<string>
+  importers: Set<Entry>
+  context?: esbuild.BuildContext
+  metafile?: esbuild.Metafile
+}
+
 async function bundle(config: Config, flags: Flags) {
   if (config.deletePrev) {
     fs.rmSync(config.build, { force: true, recursive: true })
   }
 
+  const scriptBundles = new Map<string, ScriptBundle>()
+
   let server: import('http').Server | undefined
   if (flags.watch) {
     const servePlugins = config.plugins.filter(p => p.serve) as ServePlugin[]
-    server = await installHttpServer(config, servePlugins)
+    server = await installHttpServer(config, servePlugins, scriptBundles)
   }
-
-  type EntryMetadata = {
-    document: ParentNode
-    scripts: ScriptReference[]
-    bundle: ScriptBundle
-  }
-
-  type ScriptBundle = {
-    id: string
-    hmr: boolean
-    scripts: Set<string>
-    importers: Set<Entry>
-    context?: esbuild.BuildContext
-    metafile?: esbuild.Metafile
-  }
-
-  const scriptBundles = new Map<string, ScriptBundle>()
 
   const build = async () => {
     const htmlEntries = new Map<Entry, EntryMetadata>()
@@ -201,8 +200,6 @@ async function bundle(config: Config, flags: Flags) {
     const watcher = config.watcher!
     const changedFiles = new Set<string>()
 
-    registerLinkedPackages(watcher, config.fsAllowedDirs)
-
     // TODO: track failed module resolutions and only rebuild if a file
     // is added that matches one of them.
     /*watcher.on('add', async file => {
@@ -310,39 +307,11 @@ async function bundle(config: Config, flags: Flags) {
   }
 }
 
-// This function adds all linked packages to the watcher
-// so that the watcher will detect changes in these packages.
-function registerLinkedPackages(
-  watcher: FSWatcher,
-  fsAllowedDirs: string[],
-  root = process.cwd()
+async function installHttpServer(
+  config: Config,
+  servePlugins: ServePlugin[],
+  scriptBundles: Map<string, ScriptBundle>
 ) {
-  const nodeModulesDir = path.join(root, 'node_modules')
-  const nodeModules = fs
-    .readdirSync(nodeModulesDir)
-    .flatMap(name =>
-      name[0] === '@'
-        ? fs
-            .readdirSync(path.join(nodeModulesDir, name))
-            .map(scopedName => path.join(name, scopedName))
-        : name
-    )
-
-  for (const name of nodeModules) {
-    const dependencyDir = path.join(nodeModulesDir, name)
-    const resolvedDependencyDir = fs.realpathSync(dependencyDir)
-    if (
-      resolvedDependencyDir !== dependencyDir &&
-      path.relative(process.cwd(), resolvedDependencyDir).startsWith('..')
-    ) {
-      watcher.add(resolvedDependencyDir)
-      fsAllowedDirs.push(resolvedDependencyDir)
-      registerLinkedPackages(watcher, fsAllowedDirs, resolvedDependencyDir)
-    }
-  }
-}
-
-async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
   let createServer: typeof import('http').createServer
   let serverOptions: import('https').ServerOptions | undefined
   if (config.server.https) {
@@ -367,6 +336,7 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     const request = Object.assign(req, parseURL(req.url!)) as Plugin.Request
     request.searchParams = new URLSearchParams(request.search || '')
 
+    scriptBundles
     await config.lastBuild
 
     let file: Plugin.VirtualFileData | null = null
@@ -400,9 +370,12 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
       if (!file) {
         let isAllowed = false
         if (isFileRequest) {
-          isAllowed = config.fsAllowedDirs.some(
-            dir => !path.relative(dir, filePath).startsWith('..')
-          )
+          for (const dir of config.fsAllowedDirs) {
+            if (!path.relative(dir, filePath).startsWith('..')) {
+              isAllowed = true
+              break
+            }
+          }
         } else {
           isAllowed = fsAllowRE.test(uri)
         }

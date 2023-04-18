@@ -262,6 +262,7 @@ export const devModulesPlugin: Plugin = async config => {
           })
         )
 
+        const newId = !modules[id]
         const result = nebu.process(args.code, {
           ast: program,
           filename: args.path,
@@ -276,6 +277,16 @@ export const devModulesPlugin: Plugin = async config => {
             resolutions,
           },
         })
+
+        // Detect when a linked package's module is used in a JS bundle.
+        if (newId && id.startsWith('/@fs/') && !id.includes('node_modules'))
+          for (const dir of config.linkedPackages!) {
+            if (id.startsWith('/@fs' + dir + '/')) {
+              const file = id.slice(4)
+              config.watcher!.add(file)
+              config.fsAllowedDirs.add(dirname(file))
+            }
+          }
 
         return {
           code: result.js,

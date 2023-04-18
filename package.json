@@ -6,13 +6,14 @@
     "htmelt": "./dist/cli.mjs"
   },
   "scripts": {
-    "dev": "tsc --build -w --sourceMap",
+    "dev": "tsc --build -w",
     "build": "tsc --build",
     "prepublishOnly": "rimraf dist && tsc --build"
   },
   "files": [
     "*.{d.ts,d.mts,mjs}",
     "dist",
+    "!dist/**/*.map",
     "!dist/**/*.tsbuildinfo"
   ],
   "repository": {
