@@ -125,7 +125,7 @@ importers:
 
   packages/unocss:
     specifiers:
-      '@htmelt/plugin': workspace:^0.1.2
+      '@htmelt/plugin': workspace:^0.2.0
       '@unocss/config': ^0.50.8
       '@unocss/core': ^0.50.8
     dependencies:
