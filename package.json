@@ -56,7 +56,7 @@
     "@babel/core": "^7.21.3",
     "@chialab/estransform": "^0.17.3",
     "@chialab/node-resolve": "^0.17.0",
-    "@htmelt/plugin": "workspace:^0.1.2",
+    "@htmelt/plugin": "workspace:^0.2.0",
     "@types/firefox-webext-browser": "^109.0.0",
     "browserslist": "^4.21.5",
     "browserslist-to-esbuild": "^1.2.0",
