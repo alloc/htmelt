@@ -312,8 +312,12 @@ async function bundle(config: Config, flags: Flags) {
 
 // This function adds all linked packages to the watcher
 // so that the watcher will detect changes in these packages.
-function registerLinkedPackages(watcher: FSWatcher, fsAllowedDirs: string[]) {
-  const nodeModulesDir = path.resolve('node_modules')
+function registerLinkedPackages(
+  watcher: FSWatcher,
+  fsAllowedDirs: string[],
+  root = process.cwd()
+) {
+  const nodeModulesDir = path.join(root, 'node_modules')
   const nodeModules = fs
     .readdirSync(nodeModulesDir)
     .flatMap(name =>
@@ -331,8 +335,9 @@ function registerLinkedPackages(watcher: FSWatcher, fsAllowedDirs: string[]) {
       resolvedDependencyDir !== dependencyDir &&
       path.relative(process.cwd(), resolvedDependencyDir).startsWith('..')
     ) {
-      fsAllowedDirs.push(resolvedDependencyDir)
       watcher.add(resolvedDependencyDir)
+      fsAllowedDirs.push(resolvedDependencyDir)
+      registerLinkedPackages(watcher, fsAllowedDirs, resolvedDependencyDir)
     }
   }
 }
