@@ -74,6 +74,20 @@ export async function loadBundleConfig(flags: Flags) {
   const server = await loadServerConfig(userConfig.server || {})
 
   const api: ConfigAPI = {
+    watch(paths, options) {
+      let ignored = config.watchIgnore as Extract<
+        chokidar.WatchOptions['ignored'],
+        any[]
+      >
+      if (options?.ignored) {
+        ignored = ignored.concat(options.ignored)
+      }
+      return chokidar.watch(paths, {
+        ignoreInitial: true,
+        ...options,
+        ignored,
+      })
+    },
     getBuildPath(file) {
       const wasAbsolute = path.isAbsolute(file)
       if (wasAbsolute) {
@@ -124,14 +138,14 @@ export async function loadBundleConfig(flags: Flags) {
     events: new EventEmitter(),
     virtualFiles: {},
     browsers,
-    modules: {},
-    watcher: flags.watch
-      ? chokidar.watch(srcDir, {
-          ignoreInitial: true,
-          ignored: ['.git', '.DS_Store', ...(userConfig.watchIgnore || [])],
-        })
-      : undefined,
-    watchFiles: userConfig.watchFiles ?? [],
+    modules: undefined,
+    watcher: undefined,
+    watchIgnore: [
+      'node_modules',
+      '.git',
+      '.DS_Store',
+      ...(userConfig.watchIgnore || []),
+    ],
     fsAllowedDirs: [],
     copy: userConfig.copy ?? [],
     scripts: scripts || [],
@@ -161,6 +175,11 @@ export async function loadBundleConfig(flags: Flags) {
     },
     server: flags.watch ? server : ({} as any),
     ...api,
+  }
+
+  if (flags.watch) {
+    config.modules = {}
+    config.watcher = config.watch([srcDir, ...(userConfig.watchFiles || [])])
   }
 
   await Promise.all(

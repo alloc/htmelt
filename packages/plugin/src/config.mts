@@ -1,3 +1,4 @@
+import * as chokidar from 'chokidar'
 import * as esbuild from 'esbuild'
 import { EventEmitter } from 'events'
 import { Merge } from 'type-fest'
@@ -30,8 +31,7 @@ export type UserConfig = {
    */
   scripts?: string[]
   /**
-   * Rebuild when these files change. Useful workaround for linked
-   * packages, until we have a better solution.
+   * Watch files outside of the `src` directory.
    */
   watchFiles?: string[]
   /**
@@ -107,7 +107,7 @@ export interface Module {
 }
 
 export type Config = Merge<
-  Required<Omit<UserConfig, 'watchIgnore'>>,
+  Required<UserConfig>,
   ConfigAPI & {
     mode: string
     entries: Entry[]
@@ -149,10 +149,10 @@ export type Config = Merge<
      * Note that `.js` files won't trigger a rebuild unless they have a
      * corresponding `Module` object in the `config.modules` map.
      */
-    watcher?: import('chokidar').FSWatcher
+    watcher?: chokidar.FSWatcher
 
-    /** Paths that should trigger `watcher` events when added/changed/removed. */
-    watchFiles: string[]
+    /** Paths and patterns that shouldn't be watched. */
+    watchIgnore: IgnorePattern[]
 
     /**
      * Absolute paths to directories that can be accessed from dev
@@ -162,9 +162,35 @@ export type Config = Merge<
   }
 >
 
+type IgnorePattern = Exclude<WatchOptions['ignored'], any[] | undefined>
+
+type WatchOptions = chokidar.WatchOptions & {
+  requestRebuild?: boolean
+}
+
 export interface ConfigAPI {
+  /**
+   * Watch a directory or file that exists outside the working
+   * directory.
+   */
+  watch(
+    paths: string | readonly string[],
+    options?: WatchOptions
+  ): chokidar.FSWatcher
+  /**
+   * Convert a `src` path into a `build` path.
+   */
   getBuildPath(file: string): string
+  /**
+   * Get the `file:` URL for an absolute or relative file path. If the
+   * `id` is relative and `importer` is undefined (or an `https:` URL),
+   * you'll get an `https:` URL instead.
+   */
   resolve(id: string, importer?: string | URL): URL
+  /**
+   * Similar to `resolve` but you always get a dev server URL in
+   * return (i.e. never a `file:` URL).
+   */
   resolveDevUrl(id: string, importer?: string | URL): URL
   /**
    * If a `.css` file isn't imported by an HTML file (eg: imported by

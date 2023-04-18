@@ -203,10 +203,6 @@ async function bundle(config: Config, flags: Flags) {
 
     registerLinkedPackages(watcher, config.fsAllowedDirs)
 
-    config.watchFiles.forEach(file => {
-      watcher.add(path.resolve(file))
-    })
-
     // TODO: track failed module resolutions and only rebuild if a file
     // is added that matches one of them.
     /*watcher.on('add', async file => {
