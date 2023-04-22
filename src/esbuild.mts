@@ -100,6 +100,7 @@ export function buildEntryScripts(
       bundle: true,
       splitting: true,
       treeShaking: !flags.watch,
+      ignoreAnnotations: flags.watch,
       plugins: [
         ...(config.esbuild.plugins || []),
         metaUrlPlugin(),
