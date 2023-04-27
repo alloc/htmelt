@@ -2,7 +2,7 @@
   "name": "@htmelt/plugin",
   "version": "0.2.3",
   "main": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "types": "index.d.ts",
   "scripts": {
     "dev": "tsup src/index.mts --format esm --dts --watch --sourcemap --declarationMap",
     "build": "tsup src/index.mts --format esm --dts --clean",
