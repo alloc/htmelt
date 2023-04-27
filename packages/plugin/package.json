@@ -9,6 +9,7 @@
     "prepublishOnly": "tsup src/index.mts --format esm --dts --clean"
   },
   "files": [
+    "index.d.ts",
     "dist"
   ],
   "dependencies": {
