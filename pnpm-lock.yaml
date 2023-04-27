@@ -113,7 +113,7 @@ importers:
   packages/plugin:
     specifiers:
       '@rollup/pluginutils': ^5.0.2
-      '@web/parse5-utils': ^2.0.0
+      '@types/parse5': ^6.0.1
       esbuild: ^0.17.12
       esbuild-extra: ^0.1.9
       md5-hex: ^4.0.0
@@ -128,7 +128,7 @@ importers:
       picomatch: 2.3.1
     devDependencies:
       '@rollup/pluginutils': 5.0.2
-      '@web/parse5-utils': 2.0.0_c4v5cppllxsilgjydcgnuqn22y
+      '@types/parse5': 6.0.3
       md5-hex: 4.0.0
       mitt: 3.0.0
       type-fest: 3.8.0
@@ -872,15 +872,6 @@ packages:
   /@unocss/core/0.50.8:
     resolution: {integrity: sha512-rWmyeNE0Na8dJPDynLVar0X22qMHFNhO+/F2FZDpG4tubTavXJJo9uvhZr/D381kiWxt+XZ38y6EAD4UMdBqMA==}
     dev: false
-
-  /@web/parse5-utils/2.0.0_c4v5cppllxsilgjydcgnuqn22y:
-    resolution: {integrity: sha512-9pxjAg1k0Ie3t4gTQr/nmoTrvq6wmP40MNPwaetaN+jPc328MpO+WzmEApvJOW65v7lamjlvYFDsdvG8Lrd87Q==}
-    engines: {node: '>=16.0.0'}
-    dependencies:
-      '@types/parse5': 6.0.3
-      parse5: 6.0.1
-    dev: true
-    patched: true
 
   /abort-controller/3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -3468,6 +3459,7 @@ packages:
 
   /parse5/6.0.1:
     resolution: {integrity: sha512-Ofn/CTFzRGTTxwpNEs9PP93gXShHcTq255nzRYSKe8AkVpZY7e1fpmTfOyoIvjP5HG7Z2ZM7VS9PPhQGW2pOpw==}
+    dev: false
 
   /parse5/7.1.2:
     resolution: {integrity: sha512-Czj1WaSVpaoj0wbhMzLmWD69anp2WH7FXMB9n1Sy8/ZFF9jolSQVMu1Ij5WIyGmcBmhk7EOndpO4mIpihVqAXw==}

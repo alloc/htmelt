@@ -1,21 +1,20 @@
-import { Attribute, Element, ParentNode } from '@web/parse5-utils'
 import * as esbuild from 'esbuild'
-import 'esbuild-extra/global.js'
 import * as http from 'http'
-import { Emitter } from 'mitt'
-import { Promisable } from 'type-fest'
-import { UrlWithStringQuery } from 'url'
+import type { Emitter } from 'mitt'
+import type { Attribute, Element, ParentNode } from 'parse5'
+import type { Promisable } from 'type-fest'
+import type { UrlWithStringQuery } from 'url'
 import * as lightningCss from '../types/lightningcss'
-import { Config, Entry, WebExtension } from './config.mjs'
-import { Flags } from './flags.mjs'
+import type { Config, Entry, WebExtension } from './config.mjs'
+import type { Flags } from './flags.mjs'
 
 export * from '@rollup/pluginutils'
-export * from '@web/parse5-utils'
 export { default as md5Hex } from 'md5-hex'
 export * from 'mitt'
 export { default as mitt } from 'mitt'
 export * from './config.mjs'
 export * from './flags.mjs'
+export * from './parse5/utils.mjs'
 
 export interface Plugin {
   (config: Config, flags: Flags): Promisable<PluginInstance>
