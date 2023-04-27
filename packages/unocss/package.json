@@ -4,9 +4,9 @@
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "scripts": {
-    "dev": "tsup-node src/index.mts --watch --sourcemap",
-    "build": "tsup-node src/index.mts --clean",
-    "prepublishOnly": "tsup-node src/index.mts --clean"
+    "dev": "tsup-node src/index.mts --dts --watch --sourcemap",
+    "build": "tsup-node src/index.mts --dts --clean",
+    "prepublishOnly": "tsup-node src/index.mts --dts --clean"
   },
   "files": [
     "dist"
