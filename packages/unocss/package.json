@@ -4,9 +4,9 @@
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "scripts": {
-    "dev": "tsc -p ./ --watch --sourceMap",
-    "build": "rimraf dist && tsc -p ./",
-    "prepublishOnly": "rimraf dist && tsc -p ./"
+    "dev": "tsup-node src/index.mts --watch --sourcemap",
+    "build": "tsup-node src/index.mts --clean",
+    "prepublishOnly": "tsup-node src/index.mts --clean"
   },
   "files": [
     "dist"

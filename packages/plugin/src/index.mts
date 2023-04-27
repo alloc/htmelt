@@ -12,6 +12,8 @@ import { Flags } from './flags.mjs'
 export * from '@rollup/pluginutils'
 export * from '@web/parse5-utils'
 export { default as md5Hex } from 'md5-hex'
+export * from 'mitt'
+export { default as mitt } from 'mitt'
 export * from './config.mjs'
 export * from './flags.mjs'
 
