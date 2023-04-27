@@ -57,8 +57,8 @@ export async function buildHTML(
     }
   }
 
-  if (flags.watch && document.hmr != false) {
-    injectClientConnection(document.documentElement, outFile, config)
+  if (flags.watch) {
+    injectClientConnection(document, outFile, config)
   }
 
   let html = serialize(document.documentElement)

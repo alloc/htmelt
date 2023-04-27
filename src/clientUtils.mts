@@ -2,7 +2,8 @@ import {
   appendChild,
   createScript,
   findElement,
-  ParentNode,
+  Plugin,
+  setTextContent,
 } from '@htmelt/plugin'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -21,14 +22,20 @@ export async function buildClientConnection(config: Config) {
 }
 
 export function injectClientConnection(
-  document: ParentNode,
+  document: Plugin.Document,
   outFile: string,
   config: Config
 ) {
-  const connectionFile = getConnectionFile(config)
-  const hmrScript = createScript({
-    src: relative(outFile, connectionFile),
-  })
-  const head = findElement(document, e => e.tagName === 'head')!
-  appendChild(head, hmrScript)
+  const head = findElement(document.documentElement, e => e.tagName === 'head')!
+  if (document.hmr != false) {
+    const connectionFile = getConnectionFile(config)
+    const hmrScript = createScript({
+      src: relative(outFile, connectionFile),
+    })
+    appendChild(head, hmrScript)
+  } else {
+    const stubScript = createScript()
+    setTextContent(stubScript, 'globalThis.htmelt = {export(){}}')
+    appendChild(head, stubScript)
+  }
 }
