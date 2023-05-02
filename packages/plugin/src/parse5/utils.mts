@@ -1,5 +1,5 @@
 import parse5, { ChildNode, Element, Node, ParentNode, TextNode } from 'parse5'
-import adapter from 'parse5/lib/tree-adapters/default'
+import adapter from 'parse5/lib/tree-adapters/default.js'
 
 const DEFAULT_NAMESPACE = 'http://www.w3.org/1999/xhtml'
 const REGEXP_IS_HTML_DOCUMENT = /^\s*<(!doctype|html|head|body)\b/i
