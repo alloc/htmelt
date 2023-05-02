@@ -6,9 +6,9 @@
     "htmelt": "./dist/cli.mjs"
   },
   "scripts": {
-    "dev": "tsup-node src/cli.mts --format esm --watch --sourcemap",
-    "build": "tsup-node src/cli.mts --format esm",
-    "prepublishOnly": "tsup-node src/cli.mts --format esm --clean"
+    "dev": "tsup-node src/cli.mts src/client/connection.ts --format esm --watch --sourcemap",
+    "build": "tsup-node src/cli.mts src/client/connection.ts --format esm --clean",
+    "prepublishOnly": "tsup-node src/cli.mts src/client/connection.ts --format esm --clean"
   },
   "files": [
     "*.{d.ts,d.mts,mjs}",
