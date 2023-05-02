@@ -72,6 +72,7 @@ async function bundle(config: Config, flags: Flags) {
   if (flags.watch) {
     const servePlugins = config.plugins.filter(p => p.serve) as ServePlugin[]
     server = await installHttpServer(config, servePlugins)
+    await buildClientConnection(config)
   }
 
   const createBuild = () => {
@@ -224,10 +225,6 @@ async function bundle(config: Config, flags: Flags) {
     cyan('build complete in %sms'),
     (performance.now() - timer).toFixed(2)
   )
-
-  if (flags.watch) {
-    await buildClientConnection(config)
-  }
 
   if (server) {
     const hmrInstances: Plugin.HmrInstance[] = []

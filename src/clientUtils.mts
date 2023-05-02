@@ -1,10 +1,4 @@
-import {
-  appendChild,
-  createScript,
-  findElement,
-  Plugin,
-  setTextContent,
-} from '@htmelt/plugin'
+import { appendChild, createScript, findElement, Plugin } from '@htmelt/plugin'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Config } from '../config.mjs'
@@ -15,9 +9,10 @@ const getConnectionFile = (config: Config) =>
   path.resolve(config.build, '_connection.mjs')
 
 export async function buildClientConnection(config: Config) {
+  fs.mkdirSync(config.build, { recursive: true })
   fs.writeFileSync(
     getConnectionFile(config),
-    await compileSeparateEntry('./client/connection.js', config)
+    await compileSeparateEntry('./client/connection.mjs', config)
   )
 }
 
@@ -27,15 +22,22 @@ export function injectClientConnection(
   config: Config
 ) {
   const head = findElement(document.documentElement, e => e.tagName === 'head')!
+  const connectionFile = getConnectionFile(config)
   if (document.hmr != false) {
-    const connectionFile = getConnectionFile(config)
-    const hmrScript = createScript({
-      src: relative(outFile, connectionFile),
-    })
-    appendChild(head, hmrScript)
+    appendChild(
+      head,
+      createScript({
+        src: relative(outFile, connectionFile),
+      })
+    )
   } else {
-    const stubScript = createScript()
-    setTextContent(stubScript, 'globalThis.htmelt = {export(){}}')
-    appendChild(head, stubScript)
+    const stubFile = connectionFile.replace(/\.\w+$/, '_stub$&')
+    fs.writeFileSync(stubFile, 'globalThis.htmelt = {export(){}}')
+    appendChild(
+      head,
+      createScript({
+        src: relative(outFile, stubFile),
+      })
+    )
   }
 }
