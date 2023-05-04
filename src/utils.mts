@@ -57,9 +57,15 @@ export async function loadBundleConfig(flags: Flags) {
   }
 
   const srcDir = userConfig.src ?? 'src'
-  const entries = (await promisify(glob)(srcDir + '/**/*.html')).map(file => ({
-    file,
-  }))
+  const outDir = userConfig.build ?? 'build'
+
+  const entries = (await promisify(glob)(srcDir + '/**/*.html'))
+    .filter(file => {
+      return !file.startsWith('./' + outDir)
+    })
+    .map(file => ({
+      file,
+    }))
 
   let scripts: string[] | undefined
   if (userConfig.scripts) {
