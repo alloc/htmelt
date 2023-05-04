@@ -64,7 +64,6 @@ export function findRelativeScripts(
     if (srcAttr?.value.startsWith('./')) {
       const srcPath = path.join(path.dirname(file), srcAttr.value)
       const outPath = config.getBuildPath(srcPath)
-      srcAttr.value = baseRelative(outPath)
       results.push({
         node: scriptNode,
         srcAttr,

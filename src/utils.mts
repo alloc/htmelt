@@ -56,8 +56,8 @@ export async function loadBundleConfig(flags: Flags) {
     )
   }
 
-  const srcDir = userConfig.src ?? 'src'
-  const outDir = userConfig.build ?? 'build'
+  const srcDir = (userConfig.src ?? 'src').replace(/\/$/, '')
+  const outDir = (userConfig.build ?? 'build').replace(/\/$/, '')
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))
     .filter(file => {
@@ -140,13 +140,14 @@ export async function loadBundleConfig(flags: Flags) {
   }
 
   const config: Config = {
-    build: 'build',
     assets: 'public',
     deletePrev: false,
     isCritical: false,
     ...userConfig,
     mode: nodeEnv,
     src: srcDir,
+    build: outDir,
+    base: userConfig.base ?? outDir.replace(/^\/?/, '/').replace(/\/?$/, '/'),
     entries,
     plugins: [],
     bundles: undefined!,

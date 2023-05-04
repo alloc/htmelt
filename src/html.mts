@@ -57,6 +57,15 @@ export async function buildHTML(
     }
   }
 
+  for (const script of document.scripts) {
+    let outPath = config.getBuildPath(script.srcPath)
+    outPath = baseRelative(outPath)
+    if (!flags.watch) {
+      outPath = outPath.replace('/' + config.build + '/', config.base)
+    }
+    script.srcAttr.value = outPath
+  }
+
   if (flags.watch) {
     injectClientConnection(document, outFile, config)
   }

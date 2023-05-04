@@ -17,6 +17,11 @@ export type UserConfig = {
    */
   build?: string
   /**
+   * The base URL used in HTML artifacts.
+   * @default "/" + this.build + "/"
+   */
+  base?: string
+  /**
    * Where the assets directory is located.
    * @default "public"
    */
