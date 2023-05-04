@@ -19,6 +19,27 @@ export const liveBundlesPlugin: Plugin = config => {
     }
   })
 
+  async function rebundle(bundle: Plugin.Bundle) {
+    return (pendingBundles[bundle.id] ||= bundle.context
+      .rebuild()
+      .then(
+        ({ metafile }) => {
+          bundle.metafile = metafile!
+          dirtyBundles.delete(bundle)
+        },
+        error => {
+          console.error(
+            'Error rebuilding bundle "%s": %s',
+            bundle.id,
+            error.message
+          )
+        }
+      )
+      .then(() => {
+        delete pendingBundles[bundle.id]
+      }))
+  }
+
   return {
     document(document) {
       for (const script of document.scripts) {
@@ -33,6 +54,11 @@ export const liveBundlesPlugin: Plugin = config => {
           config.server.url
         ).href
       }
+    },
+    async fullReload() {
+      // If a full reload is impending, rebuild any dirty bundles first,
+      // so the build directory is up-to-date.
+      await Promise.all(Array.from(dirtyBundles, rebundle))
     },
     async serve(req) {
       const uri = req.pathname
@@ -50,24 +76,7 @@ export const liveBundlesPlugin: Plugin = config => {
             }
             // This will write to the filesystem so the dev server can
             // read the updated file and respond to the request.
-            await (pendingBundles[bundle.id] ||= bundle.context
-              .rebuild()
-              .then(
-                ({ metafile }) => {
-                  bundle.metafile = metafile!
-                  dirtyBundles.delete(bundle)
-                },
-                error => {
-                  console.error(
-                    'Error rebuilding bundle "%s": %s',
-                    bundle.id,
-                    error.message
-                  )
-                }
-              )
-              .then(() => {
-                delete pendingBundles[bundle.id]
-              }))
+            await rebundle(bundle)
           })
         )
       }

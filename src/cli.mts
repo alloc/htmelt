@@ -353,11 +353,7 @@ async function bundle(config: Config, flags: Flags) {
       ])
 
       if (isFullReload) {
-        for (const plugin of config.plugins) {
-          if (plugin.fullReload) {
-            await plugin.fullReload()
-          }
-        }
+        await Promise.all(config.plugins.map(plugin => plugin.fullReload?.()))
         await Promise.all(Array.from(clients, client => client.reload()))
       }
 
