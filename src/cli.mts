@@ -49,7 +49,10 @@ cli
   .action(async (flags: Flags) => {
     process.env.NODE_ENV ||= flags.watch ? 'development' : 'production'
     const config = await loadBundleConfig(flags)
-    await bundle(config, flags)
+    const context = await bundle(config, flags)
+    if (!flags.watch) {
+      context.dispose()
+    }
   })
 
 cli.parse()
@@ -215,6 +218,12 @@ async function bundle(config: Config, flags: Flags) {
           )
         )
       },
+      dispose() {
+        for (const bundle of bundles.values()) {
+          bundle.context?.dispose()
+        }
+        server?.close()
+      },
     }
   }
 
@@ -357,6 +366,8 @@ async function bundle(config: Config, flags: Flags) {
 
     console.log(yellow('watching files...'))
   }
+
+  return build
 }
 
 async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
