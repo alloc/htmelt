@@ -5,8 +5,8 @@
   "types": "index.d.ts",
   "scripts": {
     "dev": "tsc -p ./ --watch --sourceMap --declarationMap",
-    "build": "tsup src/index.mts --format esm --dts --clean",
-    "prepublishOnly": "tsup src/index.mts --format esm --dts --clean"
+    "build": "rimraf dist && tsc -p ./",
+    "prepublishOnly": "rimraf dist && tsc -p ./"
   },
   "files": [
     "index.d.ts",
@@ -19,6 +19,7 @@
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
+    "@alloc/fast-rimraf": "^1.0.8",
     "@rollup/pluginutils": "^5.0.2",
     "@types/parse5": "^6.0.1",
     "md5-hex": "^4.0.0",

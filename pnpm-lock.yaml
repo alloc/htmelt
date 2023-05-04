@@ -112,6 +112,7 @@ importers:
 
   packages/plugin:
     specifiers:
+      '@alloc/fast-rimraf': ^1.0.8
       '@rollup/pluginutils': ^5.0.2
       '@types/parse5': ^6.0.1
       esbuild: ^0.17.12
@@ -127,6 +128,7 @@ importers:
       parse5: 6.0.1
       picomatch: 2.3.1
     devDependencies:
+      '@alloc/fast-rimraf': 1.0.8
       '@rollup/pluginutils': 5.0.2
       '@types/parse5': 6.0.3
       md5-hex: 4.0.0
@@ -144,6 +146,11 @@ importers:
       '@unocss/core': 0.50.8
 
 packages:
+
+  /@alloc/fast-rimraf/1.0.8:
+    resolution: {integrity: sha512-TsRTRLLDW6Q4fWBAYlbkcaHQDAANKsI0smrhS/1x7/GHcjVxo+r+2VRbqrWaYpmjdhvCp5v7n2wtwkMYp+Kivw==}
+    hasBin: true
+    dev: true
 
   /@alloc/is/3.1.2:
     resolution: {integrity: sha512-VgfKuuc45fpQRanNLYNnNWVwYBy19FSBGU5Y5q4CPuglv6KLhb+ipVy7lfn9CWM43lKRzkRPU+mt8eT+mPDhDA==}
