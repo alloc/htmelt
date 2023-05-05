@@ -131,8 +131,22 @@ export namespace Plugin {
     hmr: boolean
     scripts: Set<string>
     importers: Document[]
-    context: esbuild.BuildContext
+    context: esbuild.BuildContext<{ metafile: true }>
     metafile: esbuild.Metafile
+    /** Same as `metafile.inputs` but mapped with `baseRelative` */
+    inputs: string[]
+  }
+
+  /**
+   * Standalone scripts are defined via the `scripts` config option.
+   */
+  export interface Script {
+    srcPath: string
+    outPath: string
+    context: esbuild.BuildContext<{ write: false; metafile: true }>
+    metafile: esbuild.Metafile
+    /** Same as `metafile.inputs` but mapped with `baseRelative` */
+    inputs: string[]
   }
 }
 

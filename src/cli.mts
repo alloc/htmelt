@@ -62,8 +62,10 @@ type PartialBundle = {
   hmr: boolean
   scripts: Set<string>
   importers: Plugin.Document[]
-  context?: esbuild.BuildContext
+  context?: esbuild.BuildContext<{ metafile: true }>
   metafile?: esbuild.Metafile
+  /** Same as `metafile.inputs` but mapped with `baseRelative` */
+  inputs?: string[]
 }
 
 async function bundle(config: Config, flags: Flags) {
@@ -81,6 +83,7 @@ async function bundle(config: Config, flags: Flags) {
   const createBuild = () => {
     const bundles = new Map<string, PartialBundle>()
     const documents: Record<string, Plugin.Document> = {}
+    const scripts: Record<string, Plugin.Script> = {}
 
     const loadDocument = (file: string) => {
       const html = fs.readFileSync(file, 'utf8')
@@ -98,16 +101,29 @@ async function bundle(config: Config, flags: Flags) {
         )
       )
 
-      if (!bundle.context || !setsEqual(oldEntries, newEntries)) {
+      let { context } = bundle
+      if (!context || !setsEqual(oldEntries, newEntries)) {
+        context = await buildEntryScripts([...newEntries], config, flags)
+        bundle.context = context
         bundle.scripts = newEntries
-        bundle.context = await buildEntryScripts([...newEntries], config, flags)
       }
 
-      const { metafile } = await bundle.context!.rebuild()
-      bundle.metafile = metafile!
+      const { metafile } = await context.rebuild()
+      bundle.metafile = metafile
+      bundle.inputs = Object.keys(metafile.inputs).map(file =>
+        baseRelative(file)
+      )
     }
 
     return {
+      documents,
+      /**
+       * Build state for standalone scripts added with the `scripts`
+       * config option. Exists only in `--watch` mode.
+       */
+      get scripts() {
+        return scripts
+      },
       initialBuild: (async () => {
         const seen = new Set<string>()
 
@@ -168,10 +184,30 @@ async function bundle(config: Config, flags: Flags) {
           ...Object.values(documents).map(document =>
             buildHTML(document, config, flags)
           ),
-          ...config.scripts.map(entry => {
-            console.log(yellow('⌁'), baseRelative(entry))
-            return compileSeparateEntry(entry, config).then(code => {
-              const outFile = config.getBuildPath(entry)
+          ...config.scripts.map(srcPath => {
+            console.log(yellow('⌁'), baseRelative(srcPath))
+            if (flags.watch) {
+              return compileSeparateEntry(srcPath, config, {
+                metafile: true,
+                watch: true,
+              }).then(({ outputFiles, context, metafile }) => {
+                const outPath = config.getBuildPath(srcPath)
+                scripts[srcPath] = {
+                  srcPath,
+                  outPath,
+                  context,
+                  metafile,
+                  inputs: Object.keys(metafile.inputs).map(file => {
+                    config.watcher!.add(file)
+                    return baseRelative(file)
+                  }),
+                }
+                createDir(outPath)
+                fs.writeFileSync(outPath, outputFiles[0].text)
+              })
+            }
+            return compileSeparateEntry(srcPath, config).then(code => {
+              const outFile = config.getBuildPath(srcPath)
               createDir(outFile)
               fs.writeFileSync(outFile, code)
             })
@@ -247,6 +283,7 @@ async function bundle(config: Config, flags: Flags) {
     )
 
     const watcher = config.watcher!
+    const changedScripts = new Set<Plugin.Script>()
     const changedModules = new Set<string>()
     const changedPages = new Set<string>()
 
@@ -264,7 +301,18 @@ async function bundle(config: Config, flags: Flags) {
         changedPages.add(file)
         requestRebuild()
       } else {
-        if (file.endsWith('.css') || file in config.modules!) {
+        // Any files used by scripts added in `config.scripts` will
+        // trigger a full reload when changed.
+        let isFullReload = false
+        for (const script of Object.values(build.scripts)) {
+          if (script.inputs.includes(file)) {
+            changedScripts.add(script)
+            isFullReload = true
+          }
+        }
+        if (isFullReload) {
+          requestRebuild()
+        } else if (file.endsWith('.css') || file in config.modules!) {
           changedModules.add(file)
           requestRebuild()
         }
@@ -297,27 +345,30 @@ async function bundle(config: Config, flags: Flags) {
     const rebuild = async () => {
       console.clear()
 
-      let isFullReload = changedPages.size > 0
+      let isFullReload = changedPages.size > 0 || changedScripts.size > 0
       let stylesChanged = false
 
       const acceptedFiles = new Map<Plugin.HmrInstance, string[]>()
       if (!isFullReload) {
+        // Any files used by a bundle with HMR disabled will trigger a
+        // full reload when changed.
         const fullReloadFiles = new Set<string>()
         for (const bundle of Object.values(config.bundles)) {
           if (!bundle.hmr) {
-            for (const file in bundle.metafile.inputs) {
-              fullReloadFiles.add(
-                file.startsWith('..') ? '/@fs' + path.resolve(file) : '/' + file
-              )
+            for (const file of bundle.inputs) {
+              fullReloadFiles.add(file)
             }
           }
         }
+
         accept: for (let file of changedModules) {
           console.log(cyan('↺'), file)
+
           if (fullReloadFiles.has(file)) {
             isFullReload = true
             break
           }
+
           for (const hmr of hmrInstances) {
             if (hmr.accept(file)) {
               let files = acceptedFiles.get(hmr)
@@ -328,9 +379,11 @@ async function bundle(config: Config, flags: Flags) {
               continue accept
             }
           }
+
           if (file.endsWith('.css')) {
             stylesChanged = true
           }
+
           isFullReload = true
           break
         }
@@ -340,13 +393,26 @@ async function bundle(config: Config, flags: Flags) {
       }
 
       const htmlRebuildPromises = Array.from(changedPages, build.rebuildHTML)
+      const scriptRebuildPromises = Array.from(changedScripts, script => {
+        return script.context
+          .rebuild()
+          .then(({ outputFiles, metafile }) => {
+            fs.writeFileSync(script.outPath, outputFiles[0].text)
+            script.metafile = metafile
+            script.inputs = Object.keys(metafile.inputs).map(file =>
+              baseRelative(file)
+            )
+          })
+      })
 
+      changedScripts.clear()
       changedModules.clear()
       changedPages.clear()
 
       await Promise.all([
         ...Array.from(acceptedFiles, ([hmr, files]) => hmr.update(files)),
         ...htmlRebuildPromises,
+        ...scriptRebuildPromises,
         // Rebuild all styles if a .css file is changed and no .html
         // files were also changed.
         !changedPages.size && stylesChanged && build.rebuildStyles(),
