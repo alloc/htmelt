@@ -1,6 +1,6 @@
 {
   "name": "htmelt",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Bundle your HTML assets with Esbuild and LightningCSS. Custom plugins, HMR platform, and more.",
   "bin": {
     "htmelt": "./dist/cli.mjs"
