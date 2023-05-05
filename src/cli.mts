@@ -378,7 +378,14 @@ async function bundle(config: Config, flags: Flags) {
         }
       }
 
-      const htmlRebuildPromises = Array.from(changedPages, build.rebuildHTML)
+      const errors: any[] = []
+
+      const htmlRebuildPromises = Array.from(changedPages, file =>
+        build.rebuildHTML(file).catch(error => {
+          errors.push(error)
+        })
+      )
+
       const scriptRebuildPromises = Array.from(changedScripts, script => {
         return script.context
           .rebuild()
@@ -389,6 +396,9 @@ async function bundle(config: Config, flags: Flags) {
               baseRelative(file)
             )
           })
+          .catch(error => {
+            errors.push(error)
+          })
       })
 
       changedScripts.clear()
@@ -396,15 +406,32 @@ async function bundle(config: Config, flags: Flags) {
       changedPages.clear()
 
       await Promise.all([
-        ...Array.from(acceptedFiles, ([hmr, files]) => hmr.update(files)),
+        Promise.all(
+          Array.from(acceptedFiles, async ([hmr, files]) => hmr.update(files))
+        ).catch(error => {
+          errors.push(error)
+        }),
         ...htmlRebuildPromises,
         ...scriptRebuildPromises,
         // Rebuild all styles if a .css file is changed and no .html
         // files were also changed.
-        !changedPages.size && stylesChanged && build.rebuildStyles(),
+        !changedPages.size &&
+          stylesChanged &&
+          build.rebuildStyles().catch(error => {
+            errors.push(error)
+          }),
       ])
 
-      if (isFullReload) {
+      if (errors.length) {
+        const seen = new Set<string>()
+        for (const error of errors) {
+          if (seen.has(error.message)) continue
+          seen.add(error.message)
+          console.error()
+          console.error(error)
+        }
+        console.error()
+      } else if (isFullReload) {
         await Promise.all(config.plugins.map(plugin => plugin.fullReload?.()))
         await Promise.all(Array.from(clients, client => client.reload()))
       }
