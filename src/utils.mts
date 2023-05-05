@@ -14,7 +14,6 @@ import browserslist from 'browserslist'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
 import chokidar from 'chokidar'
 import * as fs from 'fs'
-import { mkdir } from 'fs/promises'
 import glob from 'glob'
 import * as lightningCss from 'lightningcss'
 import * as net from 'net'
@@ -228,7 +227,7 @@ async function loadPlugin(plugin: Promise<any>) {
 }
 
 export function createDir(file: string) {
-  return mkdir(path.dirname(file), { recursive: true })
+  fs.mkdirSync(path.dirname(file), { recursive: true })
 }
 
 export function toArray<T>(value: T | T[]) {

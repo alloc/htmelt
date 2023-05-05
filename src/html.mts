@@ -7,7 +7,7 @@ import {
   Plugin,
 } from '@htmelt/plugin'
 import Critters from 'critters'
-import { writeFile } from 'fs/promises'
+import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
 import { parse, parseFragment, serialize } from 'parse5'
@@ -101,8 +101,8 @@ export async function buildHTML(
     }
   }
 
-  await createDir(outFile)
-  await writeFile(outFile, html)
+  createDir(outFile)
+  fs.writeFileSync(outFile, html)
 
   return html
 }

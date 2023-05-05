@@ -168,11 +168,11 @@ async function bundle(config: Config, flags: Flags) {
           ...Object.values(documents).map(document =>
             buildHTML(document, config, flags)
           ),
-          ...config.scripts.map(async entry => {
+          ...config.scripts.map(entry => {
             console.log(yellow('⌁'), baseRelative(entry))
-            return compileSeparateEntry(entry, config).then(async code => {
+            return compileSeparateEntry(entry, config).then(code => {
               const outFile = config.getBuildPath(entry)
-              await createDir(outFile)
+              createDir(outFile)
               fs.writeFileSync(outFile, code)
             })
           }),

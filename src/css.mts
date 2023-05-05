@@ -5,7 +5,7 @@ import {
   Node,
   StyleReference,
 } from '@htmelt/plugin'
-import { writeFile } from 'fs/promises'
+import * as fs from 'fs'
 import { gray, red, yellow } from 'kleur/colors'
 import * as lightningCss from 'lightningcss'
 import path from 'path'
@@ -103,12 +103,12 @@ export async function buildRelativeStyles(
   await Promise.all(
     styles.map(style =>
       buildCSSFile(style.srcPath, config, flags)
-        .then(async result => {
+        .then(result => {
           style.srcAttr.value = baseRelative(result.outFile)
-          await createDir(result.outFile)
-          await writeFile(result.outFile, result.code)
+          createDir(result.outFile)
+          fs.writeFileSync(result.outFile, result.code)
           if (result.map) {
-            await writeFile(result.outFile + '.map', result.map)
+            fs.writeFileSync(result.outFile + '.map', result.map)
           }
         })
         .catch(e => {

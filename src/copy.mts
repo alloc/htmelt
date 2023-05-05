@@ -14,7 +14,7 @@ export async function copyFiles(
   for (let pattern of patterns) {
     if (typeof pattern != 'string') {
       await Promise.all(
-        Object.entries(pattern).map(async ([srcPath, outPath]) => {
+        Object.entries(pattern).map(([srcPath, outPath]) => {
           if (path.isAbsolute(outPath)) {
             return console.error(
               `Failed to copy "${srcPath}" to "${outPath}": Output path must be relative`
@@ -26,7 +26,7 @@ export async function copyFiles(
             )
           }
           outPath = path.resolve(config.build, outPath)
-          await createDir(outPath)
+          createDir(outPath)
           fs.copyFileSync(srcPath, outPath)
           copied++
         })
@@ -34,9 +34,9 @@ export async function copyFiles(
     } else if (glob.hasMagic(pattern)) {
       const matchedPaths = await promisify(glob)(pattern)
       await Promise.all(
-        matchedPaths.map(async srcPath => {
+        matchedPaths.map(srcPath => {
           const outPath = config.getBuildPath(srcPath)
-          await createDir(outPath)
+          createDir(outPath)
           fs.copyFileSync(srcPath, outPath)
           copied++
         })
@@ -44,7 +44,7 @@ export async function copyFiles(
     } else {
       const srcPath = pattern
       const outPath = config.getBuildPath(srcPath)
-      await createDir(outPath)
+      createDir(outPath)
       fs.copyFileSync(pattern, outPath)
       copied++
     }
