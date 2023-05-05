@@ -18,34 +18,51 @@ export async function compileSeparateEntry(
   options?: Omit<esbuild.BuildOptions, 'sourcemap' | 'metafile'>
 ): Promise<string>
 
-export async function compileSeparateEntry(
+export async function compileSeparateEntry<
+  Options extends esbuild.BuildOptions & { watch?: boolean }
+>(
   file: string,
   config: Config,
-  options?: esbuild.BuildOptions & ({ sourcemap: true } | { metafile: true })
-): Promise<esbuild.BuildResult & { outputFiles: esbuild.OutputFile[] }>
+  options: Options & ({ metafile: true } | { sourcemap: true })
+): Promise<
+  esbuild.BuildResult<Options & { write: false }> &
+    (Options['watch'] extends true
+      ? { context: esbuild.BuildContext<Options & { write: false }> }
+      : unknown)
+>
 
 export async function compileSeparateEntry(
   file: string,
   config: Config,
-  options: esbuild.BuildOptions = {}
-) {
+  { watch, ...options }: esbuild.BuildOptions & { watch?: boolean } = {}
+): Promise<any> {
   const filePath = decodeURIComponent(new URL(file, import.meta.url).pathname)
 
-  const result = await esbuild.build(
-    wrapPlugins({
-      ...config.esbuild,
-      ...options,
-      format: options.format ?? 'iife',
-      plugins:
-        options.plugins ||
-        config.esbuild.plugins?.filter(p => p.name !== 'dev-exports'),
-      sourcemap:
-        options.sourcemap ?? (config.mode == 'development' ? 'inline' : false),
-      bundle: true,
-      write: false,
-      entryPoints: [filePath],
-    })
-  )
+  const esbuildOptions = wrapPlugins({
+    ...config.esbuild,
+    ...options,
+    format: options.format ?? 'iife',
+    plugins:
+      options.plugins ||
+      config.esbuild.plugins?.filter(p => p.name !== 'dev-exports'),
+    sourcemap:
+      options.sourcemap ?? (config.mode == 'development' ? 'inline' : false),
+    bundle: true,
+    write: false,
+    entryPoints: [filePath],
+  })
+
+  let result: esbuild.BuildResult<typeof esbuildOptions> & {
+    context?: esbuild.BuildContext
+  }
+
+  if (watch) {
+    const context = await esbuild.context(esbuildOptions)
+    result = await context.rebuild()
+    result.context = context
+  } else {
+    result = await esbuild.build(esbuildOptions)
+  }
 
   if (options.sourcemap === true || options.metafile === true) {
     return result
