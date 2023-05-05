@@ -251,7 +251,11 @@ async function bundle(config: Config, flags: Flags) {
         for (const bundle of bundles.values()) {
           bundle.context?.dispose()
         }
+        for (const script of Object.values(scripts)) {
+          script.context.dispose()
+        }
         server?.close()
+        config.watcher?.close()
       },
     }
   }
