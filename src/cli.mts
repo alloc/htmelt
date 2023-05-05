@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 
-import {
-  Config,
-  Flags,
-  HmrPlugin,
-  md5Hex,
-  Plugin,
-  ServePlugin,
-} from '@htmelt/plugin'
+import { Config, Flags, md5Hex, Plugin, ServePlugin } from '@htmelt/plugin'
 import cac from 'cac'
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
@@ -273,14 +266,7 @@ async function bundle(config: Config, flags: Flags) {
 
   if (server) {
     const hmrInstances: Plugin.HmrInstance[] = []
-
-    const hmrPlugins = config.plugins.filter(p => p.hmr) as HmrPlugin[]
-    const clients = installWebSocketServer(
-      server,
-      config,
-      hmrPlugins,
-      hmrInstances
-    )
+    const clients = installWebSocketServer(server, config, hmrInstances)
 
     const watcher = config.watcher!
     const changedScripts = new Set<Plugin.Script>()
@@ -547,7 +533,6 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
 function installWebSocketServer(
   server: import('http').Server,
   config: Config,
-  hmrPlugins: HmrPlugin[],
   hmrInstances: Plugin.HmrInstance[]
 ) {
   const events = mitt()
@@ -557,7 +542,8 @@ function installWebSocketServer(
   const context: Plugin.ClientSet = clients as any
   context.on = events.on.bind(events) as any
 
-  hmrPlugins.forEach(plugin => {
+  config.plugins.forEach(plugin => {
+    if (!plugin.hmr) return
     const instance = plugin.hmr(context)
     if (instance) {
       hmrInstances.push(instance)
