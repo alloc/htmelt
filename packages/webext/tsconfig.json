@@ -1,11 +1,10 @@
 {
-  "include": ["src", "packages/webext/src/webext.mts"],
-  "references": [{ "path": "src" }, { "path": "src/client" }],
+  "include": ["src"],
   "compilerOptions": {
+    "declaration": true,
     "module": "esnext",
     "target": "esnext",
     "outDir": "dist",
-    "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

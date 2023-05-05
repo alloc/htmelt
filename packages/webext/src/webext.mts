@@ -21,7 +21,7 @@ import {
   findFreeTcpPort,
   resolveHome,
   toArray,
-} from '../utils.mjs'
+} from '../../../src/utils.mjs'
 
 type InternalEvents = {
   reload: (() => Promisable<void>)[]

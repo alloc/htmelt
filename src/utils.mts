@@ -51,7 +51,7 @@ export async function loadBundleConfig(flags: Flags) {
   }
   if (flags.webext || userConfig.webext) {
     preDefaultPlugins.push(
-      await loadPlugin(import('./plugins/webext.mjs')) //
+      await loadPlugin(import('../packages/webext/src/webext.mjs')) //
     )
   }
 
