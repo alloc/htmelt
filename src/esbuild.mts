@@ -80,12 +80,11 @@ export function findRelativeScripts(
     const srcAttr = scriptNode.attrs.find(a => a.name === 'src')
     if (srcAttr?.value.startsWith('./')) {
       const srcPath = path.join(path.dirname(file), srcAttr.value)
-      const outPath = config.getBuildPath(srcPath)
       results.push({
         node: scriptNode,
         srcAttr,
         srcPath,
-        outPath,
+        outPath: config.getBuildPath(srcPath),
         isModule: getAttribute(scriptNode, 'type') === 'module',
       })
     }

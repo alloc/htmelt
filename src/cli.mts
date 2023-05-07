@@ -83,7 +83,7 @@ async function bundle(config: Config, flags: Flags) {
       const html = fs.readFileSync(file, 'utf8')
       const documentElement = parseHTML(html)
       const scripts = findRelativeScripts(documentElement, file, config)
-      const styles = findRelativeStyles(documentElement, file)
+      const styles = findRelativeStyles(documentElement, file, config)
       return { documentElement, scripts, styles }
     }
 

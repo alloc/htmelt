@@ -166,6 +166,7 @@ export interface StyleReference {
   readonly node: Element
   readonly srcAttr: Attribute
   readonly srcPath: string
+  readonly outPath: string
 }
 
 export interface ScriptReference {

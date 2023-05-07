@@ -80,15 +80,21 @@ export async function buildCSSFile(
   }
 }
 
-export function findRelativeStyles(document: Node, file: string) {
+export function findRelativeStyles(
+  document: Node,
+  file: string,
+  config: Config
+) {
   const results: StyleReference[] = []
   for (const styleNode of findStyleSheets(document)) {
     const srcAttr = styleNode.attrs.find(a => a.name === 'href')
     if (srcAttr?.value.startsWith('./')) {
+      const srcPath = path.join(path.dirname(file), srcAttr.value)
       results.push({
         node: styleNode,
         srcAttr,
-        srcPath: path.join(path.dirname(file), srcAttr.value),
+        srcPath,
+        outPath: config.getBuildPath(srcPath),
       })
     }
   }
@@ -104,7 +110,6 @@ export async function buildRelativeStyles(
     styles.map(style =>
       buildCSSFile(style.srcPath, config, flags)
         .then(result => {
-          style.srcAttr.value = baseRelative(result.outFile)
           createDir(result.outFile)
           fs.writeFileSync(result.outFile, result.code)
           if (result.map) {
