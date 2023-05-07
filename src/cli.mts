@@ -55,6 +55,7 @@ type PartialBundle = {
   hmr: boolean
   scripts: Set<string>
   importers: Plugin.Document[]
+  entries?: Set<string>
   context?: esbuild.BuildContext<{ metafile: true }>
   metafile?: esbuild.Metafile
   /** Same as `metafile.inputs` but mapped with `baseRelative` */
@@ -87,18 +88,19 @@ async function bundle(config: Config, flags: Flags) {
     }
 
     const buildScripts = async (bundle: PartialBundle) => {
-      const oldEntries = bundle.scripts
-      const newEntries = new Set(
-        bundle.importers.flatMap(document =>
+      const oldEntries = bundle.entries
+      const newEntries = new Set([
+        ...bundle.scripts,
+        ...bundle.importers.flatMap(document =>
           document.scripts.map(script => script.srcPath)
-        )
-      )
+        ),
+      ])
 
       let { context } = bundle
-      if (!context || !setsEqual(oldEntries, newEntries)) {
+      if (!context || !oldEntries || !setsEqual(oldEntries, newEntries)) {
         context = await buildEntryScripts([...newEntries], config, flags)
         bundle.context = context
-        bundle.scripts = newEntries
+        bundle.entries = newEntries
       }
 
       const { metafile } = await context.rebuild()
