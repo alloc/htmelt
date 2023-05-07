@@ -156,6 +156,7 @@ export async function loadBundleConfig(flags: Flags) {
     watcher: undefined,
     watchIgnore: [
       '**/{node_modules,.git,.DS_Store}',
+      '**/{node_modules,.git}/**',
       ...(userConfig.watchIgnore || []),
     ],
     linkedPackages: flags.watch ? findLinkedPackages(process.cwd()) : undefined,
