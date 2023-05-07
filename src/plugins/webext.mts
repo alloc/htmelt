@@ -318,9 +318,18 @@ function getManifestFiles(manifest: any, config: Config, flags: Flags) {
   keepFiles(manifest.browser_action, 'default_popup')
   keepFiles(manifest.browser_action?.default_icon)
   keepFiles(manifest.background, 'page')
-  keepFiles(manifest.web_accessible_resources)
   keepFiles(manifest.chrome_url_overrides)
   keepFiles(manifest.icons)
+
+  if (manifest.manifest_version == 2) {
+    keepFiles(manifest.web_accessible_resources)
+  } else {
+    manifest.web_accessible_resources?.forEach(
+      (config: { resources: string[] }) => {
+        keepFiles(config.resources)
+      }
+    )
+  }
 
   const backgroundScripts = keepFiles(manifest.background?.scripts)
   const contentScripts =
