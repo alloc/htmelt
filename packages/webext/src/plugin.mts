@@ -29,34 +29,35 @@ export default (webextConfig: WebExtension.Config): Plugin =>
     // Add the web extension scripts to the build.
     config.entries.push(...scripts.map(file => ({ file })))
 
-    manifest.declarative_net_request?.rule_resources.forEach(
-      (resource, index, resources) => {
-        if ('rules' in resource) {
-          const resourcePath = path.join(
-            config.build,
-            'declarative_net_request',
-            'rule_resources',
-            resource.id + '.json'
-          )
-
-          fs.mkdirSync(path.dirname(resourcePath), { recursive: true })
-          fs.writeFileSync(resourcePath, JSON.stringify(resource.rules))
-
-          resources[index] = {
-            ...resource,
-            rules: undefined,
-            path: path.relative(process.cwd(), resourcePath),
-          }
-        }
-      }
-    )
-
     const events: InternalEvents = {
       reload: [],
     }
 
     return {
       async initialBuild() {
+        // Write inline rules to new files in the build directory.
+        manifest.declarative_net_request?.rule_resources.forEach(
+          (resource, index, resources) => {
+            if ('rules' in resource) {
+              const resourcePath = path.join(
+                config.build,
+                'declarative_net_request',
+                'rule_resources',
+                resource.id + '.json'
+              )
+
+              fs.mkdirSync(path.dirname(resourcePath), { recursive: true })
+              fs.writeFileSync(resourcePath, JSON.stringify(resource.rules))
+
+              resources[index] = {
+                ...resource,
+                rules: undefined,
+                path: path.relative(process.cwd(), resourcePath),
+              }
+            }
+          }
+        )
+
         if (!flags.watch) {
           // Pack the web extension for distribution.
           for (let target of webextConfig.targets) {
