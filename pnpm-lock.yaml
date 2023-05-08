@@ -9,7 +9,7 @@ importers:
       '@babel/core': ^7.21.3
       '@chialab/estransform': ^0.17.3
       '@chialab/node-resolve': ^0.17.0
-      '@htmelt/plugin': workspace:^0.2.0
+      '@htmelt/plugin': workspace:^0.3.0
       '@types/babel__core': ^7.20.0
       '@types/convert-source-map': ^2.0.0
       '@types/etag': ^1.8.1
@@ -116,7 +116,7 @@ importers:
 
   packages/unocss:
     specifiers:
-      '@htmelt/plugin': workspace:^0.2.0
+      '@htmelt/plugin': workspace:^0.3.0
       '@unocss/config': ^0.50.8
       '@unocss/core': ^0.50.8
     dependencies:
@@ -126,7 +126,7 @@ importers:
 
   packages/webext:
     specifiers:
-      '@htmelt/plugin': workspace:^0.2.8
+      '@htmelt/plugin': workspace:^0.3.0
       '@types/chrome': ^0.0.235
       '@types/chrome-remote-interface': ^0.31.9
       chrome-launcher: ^0.15.2
