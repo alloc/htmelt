@@ -71,17 +71,23 @@ export async function bundle(config: Config, flags: Flags) {
     }
 
     const buildScripts = async (bundle: PartialBundle) => {
-      const oldEntries = bundle.entries
-      const newEntries = new Set([
-        ...bundle.scripts,
-        ...bundle.importers.flatMap(document =>
+      const importedScripts = new Set(
+        bundle.importers.flatMap(document =>
           document.scripts.map(script => script.srcPath)
-        ),
-      ])
+        )
+      )
+
+      const oldEntries = bundle.entries
+      const newEntries = new Set([...bundle.scripts, ...importedScripts])
 
       let { context } = bundle
       if (!context || !oldEntries || !setsEqual(oldEntries, newEntries)) {
-        context = await buildEntryScripts([...newEntries], config, flags)
+        context = await buildEntryScripts(
+          bundle.scripts,
+          importedScripts,
+          config,
+          flags
+        )
         bundle.context = context
         bundle.entries = newEntries
       }

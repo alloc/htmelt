@@ -94,13 +94,36 @@ export function findRelativeScripts(
 }
 
 export function buildEntryScripts(
-  scripts: string[],
+  standaloneScripts: Set<string>,
+  importedScripts: Set<string>,
   config: Config,
   flags: { watch?: boolean; write?: boolean; minify?: boolean } = {}
 ) {
+  const scripts = [...standaloneScripts, ...importedScripts]
   for (const srcPath of scripts) {
     console.log(yellow('⌁'), baseRelative(srcPath))
   }
+
+  const htmeltStubId = '/_htmelt-stub.js'
+  config.virtualFiles[htmeltStubId] = {
+    data: 'globalThis.htmelt = {export(){}}',
+  }
+
+  const standaloneScriptPlugin: esbuild.Plugin = {
+    name: 'htmelt/standaloneScripts',
+    setup(build) {
+      build.onTransform({ loaders: ['ts', 'tsx', 'js', 'jsx'] }, args => {
+        if (standaloneScripts.has(args.path)) {
+          // Since we can't prevent a standalone script from sharing a
+          // module with an imported script (well, without duplicating
+          // code...), we need to make sure that the standalone script
+          // doesn't crash on calls to `htmelt.export`
+          return { code: `import "${htmeltStubId}"; ` + args.code }
+        }
+      })
+    },
+  }
+
   return esbuild.context(
     wrapPlugins({
       format: 'esm',
@@ -121,6 +144,7 @@ export function buildEntryScripts(
         ...(config.esbuild.plugins || []),
         metaUrlPlugin(),
         importGlobPlugin(),
+        standaloneScriptPlugin,
       ],
     })
   )
