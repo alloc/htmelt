@@ -1,6 +1,6 @@
 {
   "name": "@htmelt/plugin",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "main": "dist/index.mjs",
   "types": "index.d.ts",
   "scripts": {
