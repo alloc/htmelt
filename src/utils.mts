@@ -1,39 +1,27 @@
-import { findElements, getAttribute, getTagName, Node } from '@htmelt/plugin'
+import {
+  findElements,
+  Flags,
+  getAttribute,
+  getTagName,
+  Node,
+} from '@htmelt/plugin'
+import cac from 'cac'
 import * as fs from 'fs'
 import * as net from 'net'
 import * as path from 'path'
 
+export function parseFlags(): Flags {
+  const {
+    args: pre,
+    options: { '--': post, ...flags },
+  } = cac().parse() as any
+  flags.pre = pre
+  flags.post = post
+  return flags
+}
+
 export function createDir(file: string) {
   fs.mkdirSync(path.dirname(file), { recursive: true })
-}
-
-export function toArray<T>(value: T | T[]) {
-  return Array.isArray(value) ? value : [value]
-}
-
-export function resolveHome(file: string): string
-export function resolveHome(file: string | undefined): string | undefined
-export function resolveHome(file: string | undefined) {
-  if (file?.startsWith('~')) {
-    file = path.join(process.env.HOME || '', file.slice(1))
-  }
-  return file
-}
-
-export function baseRelative(file: string, cwd = process.cwd()) {
-  let id: string
-  if (path.isAbsolute(file)) {
-    id = path.relative(cwd, file)
-    if (id.startsWith('../')) {
-      return '/@fs' + file
-    }
-  } else {
-    if (file.startsWith('../')) {
-      return '/@fs' + path.resolve(cwd, file)
-    }
-    id = file
-  }
-  return '/' + id
 }
 
 export function relative(from: string, to: string) {

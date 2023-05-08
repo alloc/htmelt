@@ -51,7 +51,6 @@ export type UserConfig = {
   browsers?: string
   server?: ServerConfig
   /** @see https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-run */
-  webext?: boolean | WebExtension.Config
   esbuild?: esbuild.BuildOptions
   lightningCss?: Omit<lightningCss.BundleAsyncOptions<any>, 'filename'>
   htmlMinifierTerser?: htmlMinifierTerser.Options
@@ -63,46 +62,6 @@ export type UserConfig = {
 export type ServerConfig = {
   port?: number
   https?: boolean | { cert: string; key: string }
-}
-
-export namespace WebExtension {
-  export type Config = {
-    artifactsDir?: string
-    /**
-     * Copy the `webextension-polyfill` file into your build directory,
-     * then inject it into your extension.
-     */
-    polyfill?: boolean
-    run?: RunOptions
-  }
-
-  export type RunTarget = 'firefox-desktop' | 'firefox-android' | 'chromium'
-
-  export type RunOptions = {
-    target?: RunTarget | RunTarget[]
-    startUrl?: string | string[]
-    firefox?: FirefoxRunOptions
-    chromium?: ChromiumRunOptions
-    reload?: boolean
-    keepProfileChanges?: boolean
-  }
-
-  export type FirefoxRunOptions = {
-    binary?: 'firefox' | 'beta' | 'nightly' | 'deved' | (string & {})
-    profile?: string
-    keepProfileChanges?: boolean
-    devtools?: boolean
-    browserConsole?: boolean
-    preInstall?: boolean
-    args?: string[]
-  }
-
-  export type ChromiumRunOptions = {
-    binary?: string
-    profile?: string
-    keepProfileChanges?: boolean
-    args?: string[]
-  }
 }
 
 export interface Module {
@@ -120,7 +79,6 @@ export type Config = Merge<
       plugins: esbuild.Plugin[]
       define: Record<string, string>
     }
-    webext?: WebExtension.Config
 
     ///////////////////////////
     //// Watch mode config ////

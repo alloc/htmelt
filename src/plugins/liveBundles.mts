@@ -1,6 +1,5 @@
-import { Plugin } from '@htmelt/plugin'
+import { Plugin, baseRelative } from '@htmelt/plugin'
 import path from 'path'
-import { baseRelative } from '../utils.mjs'
 
 /**
  * By default, any scripts in your HTML files are rewritten to use the

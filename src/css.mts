@@ -1,15 +1,16 @@
 import {
   Config,
-  findElements,
-  getAttribute,
   Node,
   StyleReference,
+  baseRelative,
+  findElements,
+  getAttribute,
 } from '@htmelt/plugin'
 import * as fs from 'fs'
 import { gray, red, yellow } from 'kleur/colors'
 import * as lightningCss from 'lightningcss'
 import path from 'path'
-import { baseRelative, createDir } from './utils.mjs'
+import { createDir } from './utils.mjs'
 
 export async function buildCSSFile(
   file: string,

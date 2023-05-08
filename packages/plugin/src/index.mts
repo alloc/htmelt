@@ -1,3 +1,4 @@
+import type { Command } from 'cac'
 import * as esbuild from 'esbuild'
 import * as http from 'http'
 import type { Emitter } from 'mitt'
@@ -5,7 +6,7 @@ import type { Attribute, Element, ParentNode } from 'parse5'
 import type { Promisable } from 'type-fest'
 import type { UrlWithStringQuery } from 'url'
 import * as lightningCss from '../types/lightningcss'
-import type { Config, Entry, WebExtension } from './config.mjs'
+import type { Config, Entry } from './config.mjs'
 import type { Flags } from './flags.mjs'
 
 export * from '@rollup/pluginutils'
@@ -16,6 +17,7 @@ export * from 'parse5'
 export * from './config.mjs'
 export * from './flags.mjs'
 export * from './parse5/utils.mjs'
+export * from './utils.mjs'
 
 export interface Plugin {
   (config: Config, flags: Flags): Promisable<PluginInstance>
@@ -27,16 +29,22 @@ export interface PluginInstance {
    * within all of your HTML files.
    */
   bundles?: Plugin.BundlesHook
+  commands?: Plugin.CommandsHook
   cssPlugins?: CssPlugin[]
   document?: Plugin.DocumentHook
   hmr?: Plugin.HmrHook
   initialBuild?: Plugin.InitialBuildHook
   fullReload?: Plugin.FullReloadHook
   serve?: Plugin.ServeHook
-  /**
-   * Must return `true` if changes are made to the `manifest` object.
-   */
-  webext?: Plugin.WebExtHook
+}
+
+export type CLI = {
+  commands: { default: Command } & Record<string, Command>
+  command: (
+    rawName: string,
+    description?: string,
+    config?: Command['config']
+  ) => Command
 }
 
 export namespace Plugin {
@@ -44,6 +52,8 @@ export namespace Plugin {
     request: Request,
     response: http.ServerResponse
   ) => Promisable<VirtualFileData | void>
+
+  export type CommandsHook = (cli: CLI) => void
 
   export type DocumentHook = (document: Document) => Promisable<void>
 
@@ -54,11 +64,6 @@ export namespace Plugin {
   export type BundlesHook = (bundle: Record<string, Bundle>) => void
 
   export type HmrHook = (clients: ClientSet) => HmrInstance | void
-
-  export type WebExtHook = (
-    manifest: any,
-    webextConfig: WebExtension.Config
-  ) => Promisable<boolean>
 
   export interface Request extends http.IncomingMessage, UrlWithStringQuery {
     url: string

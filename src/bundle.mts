@@ -1,4 +1,11 @@
-import { Config, Flags, md5Hex, Plugin, ServePlugin } from '@htmelt/plugin'
+import {
+  Config,
+  Flags,
+  Plugin,
+  ServePlugin,
+  baseRelative,
+  md5Hex,
+} from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import { cyan, red, yellow } from 'kleur/colors'
@@ -20,7 +27,6 @@ import {
 } from './esbuild.mjs'
 import { buildHTML, parseHTML } from './html.mjs'
 import {
-  baseRelative,
   createDir,
   lowercaseKeys,
   resolveDevMapSources,

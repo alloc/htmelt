@@ -1,6 +1,5 @@
-import { Config, Flags, md5Hex, Plugin } from '@htmelt/plugin'
+import { Config, Flags, Plugin, baseRelative, md5Hex } from '@htmelt/plugin'
 import { buildCSSFile } from '../css.mjs'
-import { baseRelative } from '../utils.mjs'
 
 /**
  * This plugin allows importing `.css` files from JavaScript. When

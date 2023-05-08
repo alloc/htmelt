@@ -1,10 +1,12 @@
 import {
+  CLI,
   Config,
   ConfigAPI,
   Flags,
   Plugin,
   ServerConfig,
   UserConfig,
+  baseRelative,
 } from '@htmelt/plugin'
 import browserslist from 'browserslist'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
@@ -15,11 +17,15 @@ import * as lightningCss from 'lightningcss'
 import * as path from 'path'
 import { loadConfig } from 'unconfig'
 import { promisify } from 'util'
-import { baseRelative, findFreeTcpPort } from './utils.mjs'
+import { findFreeTcpPort } from './utils.mjs'
 
 const env = JSON.stringify
 
-export async function loadBundleConfig(flags: Flags) {
+/**
+ * Load the `bundle.config.js` file from the working directory, or use
+ * the `bundle` property in package.json.
+ */
+export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   const nodeEnv = (process.env.NODE_ENV ||= 'development')
   const result = await loadConfig<UserConfig>({
     sources: [
@@ -43,11 +49,6 @@ export async function loadBundleConfig(flags: Flags) {
     postDefaultPlugins.push(
       await loadPlugin(import('./plugins/liveBundles.mjs')),
       await loadPlugin(import('./plugins/devModules.mjs'))
-    )
-  }
-  if (flags.webext || userConfig.webext) {
-    preDefaultPlugins.push(
-      await loadPlugin(import('./plugins/webext.mjs')) //
     )
   }
 
@@ -159,7 +160,6 @@ export async function loadBundleConfig(flags: Flags) {
     fsAllowedDirs: new Set(),
     copy: userConfig.copy ?? [],
     scripts: scripts || [],
-    webext: userConfig.webext == true ? {} : userConfig.webext || undefined,
     htmlMinifierTerser: userConfig.htmlMinifierTerser ?? {},
     esbuild: {
       ...userConfig.esbuild,
@@ -197,6 +197,12 @@ export async function loadBundleConfig(flags: Flags) {
       config.plugins.push(await setup(config, flags))
     })
   )
+
+  if (cli) {
+    for (const plugin of config.plugins) {
+      plugin.commands?.(cli)
+    }
+  }
 
   return config
 }

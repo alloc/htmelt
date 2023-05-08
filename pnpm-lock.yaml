@@ -1,10 +1,5 @@
 lockfileVersion: 5.4
 
-patchedDependencies:
-  '@web/parse5-utils@2.0.0':
-    hash: c4v5cppllxsilgjydcgnuqn22y
-    path: patches/@web__parse5-utils@2.0.0.patch
-
 importers:
 
   .:
@@ -16,26 +11,20 @@ importers:
       '@chialab/node-resolve': ^0.17.0
       '@htmelt/plugin': workspace:^0.2.0
       '@types/babel__core': ^7.20.0
-      '@types/chrome-remote-interface': ^0.31.9
       '@types/convert-source-map': ^2.0.0
       '@types/etag': ^1.8.1
-      '@types/firefox-webext-browser': ^109.0.0
       '@types/glob': ^8.0.0
       '@types/html-minifier-terser': ^7.0.0
-      '@types/parse5': '6'
       '@types/ws': ^8.5.4
       browserslist: ^4.21.5
       browserslist-to-esbuild: ^1.2.0
       cac: ^6.7.14
       chokidar: ^3.5.3
-      chrome-launcher: ^0.15.1
-      chrome-remote-interface: ^0.32.1
       convert-source-map: ^2.0.0
       critters: ^0.0.16
       esbuild: ^0.17.12
       esbuild-extra: ^0.1.9
       execa: ^7.0.0
-      exit-hook: ^3.2.0
       fast-glob: ^3.2.12
       glob: ^8.1.0
       html-minifier-terser: ^7.1.0
@@ -47,7 +36,6 @@ importers:
       mrmime: ^1.0.1
       nebu: ^2.3.7
       node-forge: ^1.3.1
-      parse5: ^6.0.1
       prettier: ^2.8.4
       ts-debounce: ^4.0.0
       tsup: ^6.7.0
@@ -55,8 +43,6 @@ importers:
       typescript: ^4.9.4
       unconfig: ^0.3.7
       uuid: npm:@lukeed/uuid@^2.0.0
-      web-ext: ^7.5.0
-      webextension-polyfill: ^0.10.0
       ws: ^8.12.1
     dependencies:
       '@ampproject/remapping': 2.2.1
@@ -64,18 +50,15 @@ importers:
       '@chialab/estransform': 0.17.3
       '@chialab/node-resolve': 0.17.0
       '@htmelt/plugin': link:packages/plugin
-      '@types/firefox-webext-browser': 109.0.0
       browserslist: 4.21.5
       browserslist-to-esbuild: 1.2.0
       cac: 6.7.14
       chokidar: 3.5.3
-      chrome-remote-interface: 0.32.2
       convert-source-map: 2.0.0
       critters: 0.0.16
       esbuild: 0.17.17
       esbuild-extra: 0.1.10_l5wnii47wbeyqqaa4amgkfwe7m
       execa: 7.1.1
-      exit-hook: 3.2.0
       fast-glob: 3.2.12
       glob: 8.1.0
       html-minifier-terser: 7.2.0
@@ -87,25 +70,19 @@ importers:
       mrmime: 1.0.1
       nebu: 2.3.8
       node-forge: 1.3.1
-      parse5: 6.0.1
       ts-debounce: 4.0.0
       type-fest: 3.8.0
       unconfig: 0.3.7
       uuid: /@lukeed/uuid/2.0.1
-      web-ext: 7.6.1
-      webextension-polyfill: 0.10.0
       ws: 8.13.0
     devDependencies:
       '@alloc/prettier-config': 1.0.0
       '@types/babel__core': 7.20.0
-      '@types/chrome-remote-interface': 0.31.9
       '@types/convert-source-map': 2.0.0
       '@types/etag': 1.8.1
       '@types/glob': 8.1.0
       '@types/html-minifier-terser': 7.0.0
-      '@types/parse5': 6.0.3
       '@types/ws': 8.5.4
-      chrome-launcher: 0.15.2
       prettier: 2.8.7
       tsup: 6.7.0_typescript@4.9.5
       typescript: 4.9.5
@@ -115,6 +92,7 @@ importers:
       '@alloc/fast-rimraf': ^1.0.8
       '@rollup/pluginutils': ^5.0.2
       '@types/parse5': ^6.0.1
+      cac: ^6.7.14
       esbuild: ^0.17.12
       esbuild-extra: ^0.1.9
       md5-hex: ^4.0.0
@@ -123,6 +101,7 @@ importers:
       picomatch: ^2.3.1
       type-fest: ^3.6.0
     dependencies:
+      cac: 6.7.14
       esbuild: 0.17.17
       esbuild-extra: 0.1.9_esbuild@0.17.17
       parse5: 6.0.1
@@ -144,6 +123,29 @@ importers:
       '@htmelt/plugin': link:../plugin
       '@unocss/config': 0.50.8
       '@unocss/core': 0.50.8
+
+  packages/webext:
+    specifiers:
+      '@htmelt/plugin': workspace:^0.2.8
+      '@types/chrome': ^0.0.235
+      '@types/chrome-remote-interface': ^0.31.9
+      chrome-launcher: ^0.15.2
+      chrome-remote-interface: ^0.32.1
+      exit-hook: ^3.2.0
+      kleur: ^4.1.5
+      type-fest: ^3.6.0
+      web-ext: ^7.5.0
+    dependencies:
+      '@htmelt/plugin': link:../plugin
+      '@types/chrome': 0.0.235
+      chrome-remote-interface: 0.32.2
+      exit-hook: 3.2.0
+      kleur: 4.1.5
+      type-fest: 3.8.0
+      web-ext: 7.6.1
+    devDependencies:
+      '@types/chrome-remote-interface': 0.31.9
+      chrome-launcher: 0.15.2
 
 packages:
 
@@ -595,7 +597,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
       eslint: 8.36.0
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.0
     dev: false
 
   /@eslint-community/regexpp/4.5.0:
@@ -808,6 +810,13 @@ packages:
       devtools-protocol: 0.0.927104
     dev: true
 
+  /@types/chrome/0.0.235:
+    resolution: {integrity: sha512-SPj9A4E35SBJICjnL04KZEA/eVr8Km7gbnEfAxzaU2fHpLSnN64OPnfOR3EpDJXXpSORKTn3OUDwugw+rYBBXA==}
+    dependencies:
+      '@types/filesystem': 0.0.32
+      '@types/har-format': 1.2.10
+    dev: false
+
   /@types/convert-source-map/2.0.0:
     resolution: {integrity: sha512-QUm4YOC/ENo0VjPVl2o8HGyTbHHQGDOw8PCg3rXBucYHKyZN/XjXRbPFAV1tB2FvM0/wyFoDct4cTIctzKrQFg==}
     dev: true
@@ -822,8 +831,14 @@ packages:
       '@types/node': 18.15.11
     dev: true
 
-  /@types/firefox-webext-browser/109.0.0:
-    resolution: {integrity: sha512-tkEjBP/zZxaS5bv8MH/0kUs3WeUm8KU3Ew1B9BtQQdq5PwtG23SXvAbjxjMSQpoIzbxyWG4Yu4mi1uB2S8W7ng==}
+  /@types/filesystem/0.0.32:
+    resolution: {integrity: sha512-Yuf4jR5YYMR2DVgwuCiP11s0xuVRyPKmz8vo6HBY3CGdeMj8af93CFZX+T82+VD1+UqHOxTq31lO7MI7lepBtQ==}
+    dependencies:
+      '@types/filewriter': 0.0.29
+    dev: false
+
+  /@types/filewriter/0.0.29:
+    resolution: {integrity: sha512-BsPXH/irW0ht0Ji6iw/jJaK8Lj3FJemon2gvEqHKpCdDCeemHa+rI3WBGq5z7cDMZgoLjY40oninGxqk+8NzNQ==}
     dev: false
 
   /@types/glob/8.1.0:
@@ -832,6 +847,10 @@ packages:
       '@types/minimatch': 5.1.2
       '@types/node': 18.15.11
     dev: true
+
+  /@types/har-format/1.2.10:
+    resolution: {integrity: sha512-o0J30wqycjF5miWDKYKKzzOU1ZTLuA42HZ4HE7/zqTOc/jTLdQ5NhYWvsRQo45Nfi1KHoRdNhteSI4BAxTF1Pg==}
+    dev: false
 
   /@types/html-minifier-terser/7.0.0:
     resolution: {integrity: sha512-hw3bhStrg5e3FQT8qZKCJTrzt/UbEaunU1xRWJ+aNOTmeBMvE3S4Ml2HiiNnZgL8izu0LFVkHUoPFXL1s5QNpQ==}
@@ -1937,8 +1956,8 @@ packages:
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.0
-      eslint-visitor-keys: 3.3.0
-      espree: 9.5.0
+      eslint-visitor-keys: 3.4.0
+      espree: 9.5.1
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -1973,7 +1992,7 @@ packages:
     dependencies:
       acorn: 8.8.2
       acorn-jsx: 5.3.2_acorn@8.8.2
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.0
     dev: false
 
   /espree/9.5.1:
@@ -4507,10 +4526,6 @@ packages:
   /web-streams-polyfill/3.2.1:
     resolution: {integrity: sha512-e0MO3wdXWKrLbL0DgGnUV7WHVuw9OUvL4hjgnPkIeEvESk74gAITi5G606JtZPp39cd8HA9VQzCIvA49LpPN5Q==}
     engines: {node: '>= 8'}
-    dev: false
-
-  /webextension-polyfill/0.10.0:
-    resolution: {integrity: sha512-c5s35LgVa5tFaHhrZDnr3FpQpjj1BB+RXhLTYUxGqBVN460HkbM8TBtEqdXWbpTKfzwCcjAZVF7zXCYSKtcp9g==}
     dev: false
 
   /webidl-conversions/4.0.2:

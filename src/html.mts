@@ -1,19 +1,22 @@
 import {
-  appendChild,
   Config,
-  createElement,
-  findElement,
   ParentNode,
   Plugin,
+  appendChild,
+  baseRelative,
+  createElement,
+  findElement,
+  parse,
+  parseFragment,
+  serialize,
 } from '@htmelt/plugin'
 import Critters from 'critters'
 import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
-import { parse, parseFragment, serialize } from 'parse5'
 import { injectClientConnection } from './clientUtils.mjs'
 import { buildRelativeStyles } from './css.mjs'
-import { baseRelative, createDir } from './utils.mjs'
+import { createDir } from './utils.mjs'
 
 export function parseHTML(html: string) {
   const document = (

@@ -1,8 +1,9 @@
 import {
   Config,
-  getAttribute,
   ParentNode,
   ScriptReference,
+  baseRelative,
+  getAttribute,
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { wrapPlugins } from 'esbuild-extra'
@@ -10,7 +11,7 @@ import { yellow } from 'kleur/colors'
 import * as path from 'path'
 import importGlobPlugin from './plugins/importGlob/index.mjs'
 import metaUrlPlugin from './plugins/importMetaUrl.mjs'
-import { baseRelative, findExternalScripts } from './utils.mjs'
+import { findExternalScripts } from './utils.mjs'
 
 export async function compileSeparateEntry(
   file: string,
