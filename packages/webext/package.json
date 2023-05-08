@@ -1,0 +1,27 @@
+{
+  "name": "@htmelt/webext",
+  "version": "0.1.0",
+  "main": "dist/index.mjs",
+  "types": "index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.mts --format esm --dts --watch --sourcemap",
+    "build": "tsup src/index.mts --format esm --dts --clean",
+    "prepublishOnly": "tsup src/index.mts --format esm --dts --clean"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@htmelt/plugin": "workspace:^0.2.8",
+    "@types/chrome": "^0.0.235",
+    "chrome-remote-interface": "^0.32.1",
+    "exit-hook": "^3.2.0",
+    "kleur": "^4.1.5",
+    "type-fest": "^3.6.0",
+    "web-ext": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/chrome-remote-interface": "^0.31.9",
+    "chrome-launcher": "^0.15.2"
+  }
+}
