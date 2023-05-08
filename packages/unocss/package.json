@@ -1,6 +1,6 @@
 {
   "name": "@htmelt/unocss",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
