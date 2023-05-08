@@ -1,7 +1,7 @@
 import './devModules'
 
 function connect() {
-  const ws = new WebSocket('wss://localhost:' + import.meta.env.HMR_PORT)
+  const ws = new WebSocket(import.meta.env.HMR_URL)
   ws.onmessage = async ({ data }) => {
     const { id, src, args } = JSON.parse(data)
 

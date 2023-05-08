@@ -61,7 +61,12 @@ export type UserConfig = {
 
 export type ServerConfig = {
   port?: number
-  https?: boolean | { cert: string; key: string }
+  https?: boolean | HttpsConfig
+}
+
+export type HttpsConfig = {
+  cert: string
+  key: string
 }
 
 export interface Module {

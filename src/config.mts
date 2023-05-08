@@ -3,6 +3,7 @@ import {
   Config,
   ConfigAPI,
   Flags,
+  HttpsConfig,
   Plugin,
   ServerConfig,
   UserConfig,
@@ -170,9 +171,11 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         'process.env.NODE_ENV': env(nodeEnv),
         'import.meta.env.DEV': env(nodeEnv == 'development'),
         'import.meta.env.DEV_URL': env(server.url),
-        'import.meta.env.HMR_PORT': env(server.port),
+        'import.meta.env.HMR_URL': env(
+          (server.https ? 'wss' : 'ws') + '://localhost:' + server.port
+        ),
       },
-    } as any,
+    },
     lightningCss: {
       ...userConfig.lightningCss,
       targets:
@@ -183,7 +186,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         ...userConfig.lightningCss?.drafts,
       },
     },
-    server: flags.watch ? server : ({} as any),
+    server: flags.watch ? server : null!,
     ...api,
   }
 
@@ -208,7 +211,9 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 }
 
 async function loadServerConfig(config: ServerConfig) {
-  const https = config.https != true ? config.https || undefined : {}
+  const https =
+    config.https != true ? config.https || undefined : ({} as HttpsConfig)
+
   const protocol = https ? 'https' : 'http'
 
   let port = config.port || 0

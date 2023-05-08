@@ -4,7 +4,7 @@ interface ImportMeta {
 }
 
 interface ImportMetaEnv {
-  HMR_PORT: number
+  HMR_URL: string
   DEV_URL: string
   DEV: boolean
 }
