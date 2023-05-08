@@ -135,9 +135,10 @@ function getManifestFiles(
       })
     }
     if (key != null) {
-      const file = (arg as any)[key] as string
+      const file: string = Reflect.get(arg, key)
       if (file.startsWith(config.src + '/')) {
         Reflect.set(arg, key, config.getBuildPath(file))
+        return [file]
       }
       keepFile(file)
       return noSrcFiles
@@ -162,7 +163,7 @@ function getManifestFiles(
     keepFiles(manifest.browser_action, 'default_popup')
     keepFiles(manifest.browser_action?.default_icon)
   } else {
-    backgroundScripts = keepFiles(manifest.background?.service_worker)
+    backgroundScripts = keepFiles(manifest.background, 'service_worker')
     manifest.web_accessible_resources?.forEach(config => {
       keepFiles(config.resources)
     })
