@@ -1,32 +1,12 @@
-interface ImportMeta {
-  env: ImportMetaEnv
-  glob: ImportGlobFunction
-}
+type ImportMetaExtensions =
+  import('@htmelt/plugin/dist/importMeta.mjs').ImportMeta
 
-interface ImportMetaEnv {
-  HMR_URL: string
-  DEV_URL: string
-  DEV: boolean
-}
+interface ImportMeta extends ImportMetaExtensions {}
 
 declare const process: {
   env: {
     NODE_ENV: string
   }
-}
-
-type ImportGlobOptions<TEager extends boolean> = {
-  eager?: TEager
-  import?: string
-}
-
-interface ImportGlobFunction {
-  <TEager extends boolean = false>(
-    pattern: string | string[],
-    options?: ImportGlobOptions<TEager>
-  ): TEager extends true
-    ? Record<string, unknown>
-    : Record<string, () => Promise<any>>
 }
 
 /** Exists in watch mode only. */

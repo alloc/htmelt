@@ -16,6 +16,7 @@ export { default as mitt } from 'mitt'
 export * from 'parse5'
 export * from './config.mjs'
 export * from './flags.mjs'
+export * from './importMeta.mjs'
 export * from './parse5/utils.mjs'
 export * from './utils.mjs'
 

@@ -21,3 +21,34 @@ pnpm install -D @htmelt/unocss
 yarn add -D @htmelt/unocss
 npm install --save-dev @htmelt/unocss
 ```
+
+## `import.meta` extensions
+
+The typings of `import.meta` and `import.meta.env` can both be extended
+by plugins.
+
+```ts
+declare module '@htmelt/plugin/dist/importMeta.mjs' {
+  export interface ImportMeta {
+    foo: string
+  }
+  export interface ImportMetaEnv {
+    bar: string
+  }
+}
+
+// Important: Ensure this file is a module
+export {}
+```
+
+It's recommended to add a `client.d.ts` module to your plugin's root
+directory and advise users to include `my-plugin/client` in the `types`
+array of their tsconfig (along with `htmelt/client`).
+
+```json
+{
+  "compilerOptions": {
+    "types": ["htmelt/client", "my-plugin/client"]
+  }
+}
+```
