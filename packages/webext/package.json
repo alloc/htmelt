@@ -4,9 +4,9 @@
   "main": "dist/index.mjs",
   "types": "index.d.ts",
   "scripts": {
-    "dev": "tsup src/index.mts --format esm --dts --watch --sourcemap",
-    "build": "tsup src/index.mts --format esm --dts --clean",
-    "prepublishOnly": "tsup src/index.mts --format esm --dts --clean"
+    "dev": "tsc -p ./ --watch --sourceMap --declarationMap",
+    "build": "rimraf dist && tsc -p ./",
+    "prepublishOnly": "rimraf dist && tsc -p ./"
   },
   "files": [
     "dist",
@@ -22,6 +22,7 @@
     "web-ext": "^7.5.0"
   },
   "devDependencies": {
+    "@alloc/fast-rimraf": "^1.0.8",
     "@types/chrome-remote-interface": "^0.31.9",
     "chrome-launcher": "^0.15.2"
   }
