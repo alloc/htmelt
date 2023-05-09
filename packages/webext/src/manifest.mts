@@ -4,8 +4,14 @@ import fs from 'fs'
 import path from 'path'
 import { WebExtension } from './types.mjs'
 
+export function isManifestV3(
+  manifest: WebExtension.Manifest
+): manifest is WebExtension.ManifestV3 {
+  return manifest.manifest_version > 2
+}
+
 export async function loadManifest(
-  webextConfig: WebExtension.Config,
+  webextConfig: WebExtension.Options,
   config: Config,
   flags: Flags
 ) {

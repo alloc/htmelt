@@ -1,4 +1,4 @@
-import { Entry, Flags, Plugin } from '@htmelt/plugin'
+import { Flags, Plugin } from '@htmelt/plugin'
 import chromeRemote from 'chrome-remote-interface'
 import exitHook from 'exit-hook'
 import fs from 'fs'
@@ -6,7 +6,7 @@ import { cyan, yellow } from 'kleur/colors'
 import path from 'path'
 import { Promisable } from 'type-fest'
 import { cmd as webExtCmd } from 'web-ext'
-import { loadManifest } from './manifest.mjs'
+import { isManifestV3, loadManifest } from './manifest.mjs'
 import { WebExtension } from './types.mjs'
 import { findFreeTcpPort, replaceHomeDir, toArray } from './utils.mjs'
 
@@ -14,13 +14,16 @@ type InternalEvents = {
   reload: (() => Promisable<void>)[]
 }
 
-export default (webextConfig: WebExtension.Config): Plugin =>
+export default (options: WebExtension.Options): Plugin =>
   async (config, flags) => {
     const { manifest, scripts, ignoredFiles, backgroundPage } =
-      await loadManifest(webextConfig, config, flags)
+      await loadManifest(options, config, flags)
 
-    const backgroundEntry = (backgroundPage &&
-      config.entries.find(e => e.file == backgroundPage)) as Entry | undefined
+    // Manifest V2 only.
+    const backgroundEntry = backgroundPage
+      ? config.entries.find(e => e.file == backgroundPage)
+      : undefined
+
     if (backgroundEntry) {
       backgroundEntry.bundleId = backgroundPage
       backgroundEntry.hmr = false
@@ -29,57 +32,67 @@ export default (webextConfig: WebExtension.Config): Plugin =>
     // Add the web extension scripts to the build.
     config.entries.push(...scripts.map(file => ({ file })))
 
+    const target = resolveTarget(options, flags)
+    config.esbuild.define['import.meta.platform'] = JSON.stringify(
+      target.platform
+    )
+
     const events: InternalEvents = {
       reload: [],
     }
 
     return {
       async initialBuild() {
-        // Write inline rules to new files in the build directory.
-        manifest.declarative_net_request?.rule_resources.forEach(
-          (resource, index, resources) => {
-            if ('rules' in resource) {
-              const resourcePath = path.join(
-                config.build,
-                'declarative_net_request',
-                'rule_resources',
-                resource.id + '.json'
-              )
+        if (isManifestV3(manifest)) {
+          // Remove permissions meant for other targets.
+          if (manifest.permissions) {
+            const perms = new Set(manifest.permissions)
+            perms.forEach(perm => {
+              // Firefox only (MV3)
+              if (perm === 'webRequestBlocking' && !isFirefox(target)) {
+                perms.delete(perm)
+              }
+            })
+            manifest.permissions = [...perms]
+          }
 
-              fs.mkdirSync(path.dirname(resourcePath), { recursive: true })
-              fs.writeFileSync(resourcePath, JSON.stringify(resource.rules))
+          // Write inline rules to new files in the build directory.
+          manifest.declarative_net_request?.rule_resources.forEach(
+            (resource, index, resources) => {
+              if ('rules' in resource) {
+                const resourcePath = path.join(
+                  config.build,
+                  'declarative_net_request',
+                  'rule_resources',
+                  resource.id + '.json'
+                )
 
-              resources[index] = {
-                ...resource,
-                rules: undefined,
-                path: path.relative(process.cwd(), resourcePath),
+                fs.mkdirSync(path.dirname(resourcePath), { recursive: true })
+                fs.writeFileSync(resourcePath, JSON.stringify(resource.rules))
+
+                resources[index] = {
+                  ...resource,
+                  rules: undefined,
+                  path: path.relative(process.cwd(), resourcePath),
+                }
               }
             }
-          }
-        )
+          )
+        }
 
+        // Pack the web extension for distribution.
         if (!flags.watch) {
-          // Pack the web extension for distribution.
-          for (let target of webextConfig.targets) {
-            const platform =
-              typeof target === 'string' ? target : target.platform
+          writeManifest(target.platform, structuredClone(manifest))
 
-            if (flags.platform && flags.platform !== platform) {
-              continue
-            }
-
-            writeManifest(platform, structuredClone(manifest))
-
-            await webExtCmd.build({
-              sourceDir: process.cwd(),
-              artifactsDir: path.resolve(
-                webextConfig.artifactsDir || 'web-ext-artifacts',
-                platform
-              ),
-              ignoreFiles: [...ignoredFiles],
-              overwriteDest: true,
-            })
-          }
+          await webExtCmd.build({
+            sourceDir: process.cwd(),
+            artifactsDir: path.resolve(
+              options.artifactsDir || 'web-ext-artifacts',
+              target.platform
+            ),
+            ignoreFiles: [...ignoredFiles],
+            overwriteDest: true,
+          })
         }
       },
       async fullReload() {
@@ -88,7 +101,7 @@ export default (webextConfig: WebExtension.Config): Plugin =>
         }
       },
       hmr(clients) {
-        developExtension(webextConfig, manifest, flags, clients, events).catch(
+        developExtension(target, options, manifest, clients, events).catch(
           console.error
         )
 
@@ -117,38 +130,53 @@ const platformAliases: Record<string, WebExtension.Platform> = {
   firefox: 'firefox-desktop',
 }
 
-async function developExtension(
-  webextConfig: WebExtension.Config,
-  manifest: WebExtension.Manifest,
-  flags: Flags,
-  clients: Plugin.ClientSet,
-  events: InternalEvents
-) {
-  const targets = webextConfig.targets || ['chromium']
+function resolveTarget(
+  options: WebExtension.Options,
+  flags: Flags
+): WebExtension.Target {
+  const targets = options.targets || ['chromium']
   const platform =
     flags.platform && (platformAliases[flags.platform] || flags.platform)
 
-  let target = platform
-    ? targets.find(
-        target =>
-          platform === (typeof target === 'string' ? target : target.platform)
-      )
-    : targets[0]
-
-  if (!target) {
-    throw Error(`unknown browser target: "${platform}"`)
+  let target: WebExtension.Target | WebExtension.Platform | undefined
+  if (platform) {
+    target = targets.find(
+      target =>
+        platform === (typeof target === 'string' ? target : target.platform)
+    )
+    if (!target) {
+      throw Error(`unknown browser target: "${platform}"`)
+    }
+  } else {
+    target = targets[0]
   }
 
   if (typeof target === 'string') {
-    target = { platform: target } as WebExtension.Target
+    return { platform: target }
   }
 
+  return target
+}
+
+function isFirefox(
+  target: WebExtension.Target
+): target is WebExtension.FirefoxTarget {
+  return target.platform.startsWith('firefox')
+}
+
+async function developExtension(
+  target: WebExtension.Target,
+  options: WebExtension.Options,
+  manifest: WebExtension.Manifest,
+  clients: Plugin.ClientSet,
+  events: InternalEvents
+) {
   const runOptions: WebExtension.RunOptions &
     WebExtension.ChromiumRunOptions &
-    WebExtension.FirefoxRunOptions = { ...webextConfig.run, ...target.run }
+    WebExtension.FirefoxRunOptions = { ...options.run, ...target.run }
 
   const artifactsDir = path.resolve(
-    webextConfig.artifactsDir || 'web-ext-artifacts',
+    options.artifactsDir || 'web-ext-artifacts',
     target.platform
   )
 
@@ -480,22 +508,46 @@ function writeManifest(
   platform: WebExtension.Platform,
   manifest: WebExtension.Manifest
 ) {
-  const serviceWorker =
-    manifest.manifest_version == 3 && manifest.background
-      ? {
-          scripts: [manifest.background.service_worker],
-          type: manifest.background.type,
-        }
-      : undefined
+  if (isManifestV3(manifest)) {
+    processBackgroundWorkerMV3(platform, manifest)
+  }
+  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2))
+}
 
-  // Firefox doesn't support background.service_worker, so rewrite it to
-  // be an event-driven background script.
-  if (serviceWorker && platform !== 'chromium') {
-    manifest.background = {
-      ...serviceWorker,
-      persistent: false,
+function processBackgroundWorkerMV3(
+  platform: WebExtension.Platform,
+  manifest: WebExtension.ManifestV3
+) {
+  let bg = manifest.background
+  if (!bg) {
+    return
+  }
+
+  // Firefox doesn't support background.service_worker, so rewrite it
+  // to be an event-driven background script.
+  if (platform !== 'chromium') {
+    if (bg.scripts || bg.service_worker) {
+      bg = {
+        scripts: bg.scripts || [bg.service_worker!],
+        persistent: false,
+      }
+    } else {
+      bg = undefined
     }
   }
 
-  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2))
+  // Chromium uses background.service_worker, so remove the
+  // background.scripts property if both are defined.
+  else if (bg.scripts) {
+    if (bg.service_worker) {
+      bg = {
+        service_worker: bg.service_worker,
+        type: bg.type,
+      }
+    } else {
+      bg = undefined
+    }
+  }
+
+  manifest.background = bg
 }
