@@ -165,22 +165,25 @@ export async function bundle(config: Config, flags: Flags) {
           isolatedScripts = []
         }
 
+        const bundlePromises: Record<string, Promise<any>> = {}
+        const bundlesPromise = Promise.all(
+          Array.from(bundles, async ([bundleId, bundle]) => {
+            await (bundlePromises[bundleId] = buildScripts(bundle))
+            return [bundleId, bundle as Plugin.Bundle] as const
+          })
+        ).then(Object.fromEntries<Plugin.Bundle>)
+
         await Promise.all([
-          Promise.all(
-            Array.from(bundles, async ([bundleId, bundle]) => {
-              await buildScripts(bundle)
-              return [bundleId, bundle as Plugin.Bundle] as const
-            })
-          )
-            .then(Object.fromEntries<Plugin.Bundle>)
-            .then(bundles => {
-              config.bundles = bundles
-              for (const plugin of config.plugins) {
-                plugin.bundles?.(bundles)
-              }
-            }),
+          bundlesPromise.then(async bundles => {
+            config.bundles = bundles
+            await Promise.all(
+              config.plugins.map(plugin => plugin.bundles?.(bundles))
+            )
+          }),
           ...Object.values(documents).map(document =>
-            buildHTML(document, config, flags)
+            bundlePromises[document.bundle.id].then(() =>
+              buildHTML(document, config, flags)
+            )
           ),
           ...isolatedScripts.map(srcPath => {
             console.log(yellow('⌁'), baseRelative(srcPath))

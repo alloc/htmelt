@@ -51,7 +51,7 @@ export namespace Plugin {
 
   export type FullReloadHook = () => Promisable<void>
 
-  export type BundlesHook = (bundle: Record<string, Bundle>) => void
+  export type BundlesHook = (bundle: Record<string, Bundle>) => Promisable<void>
 
   export type HmrHook = (clients: ClientSet) => HmrInstance | void
 
