@@ -1,4 +1,5 @@
 import {
+  baseRelative,
   createElement,
   findElement,
   getTagName,
@@ -37,9 +38,10 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
           }
 
           const id = args.path
+          const uri = baseRelative(id)
 
           let css = cache?.[id]
-          if (css == null) {
+          if (css === undefined) {
             const unoResult = await uno.generate(args.code, {
               id,
               preflights: false,
@@ -48,9 +50,10 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
             if (cache) {
               cache[id] = css
             }
-            if (css == null) {
-              return null
-            }
+          }
+          if (css === null) {
+            moduleMap.delete(uri)
+            return null
           }
 
           const hash = md5Hex(id)
@@ -61,7 +64,7 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
           }
 
           // TODO: use this for HMR updates
-          moduleMap.set(id, [md5Hex(css), cssPath])
+          moduleMap.set(uri, [md5Hex(css), cssPath])
 
           return {
             code: `import "${cssPath}";${args.code}`,
@@ -72,13 +75,16 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
     })
 
     return {
-      async document({ file, documentElement }) {
+      async document({ file, documentElement, bundle }) {
         const headTag = findElement(
           documentElement,
           node => getTagName(node) === 'head'
         )
         if (!headTag) {
           throw Error('No <head> tag found in document: ' + file)
+        }
+        if (!bundle.inputs.some(uri => moduleMap.has(uri))) {
+          return // no tokens were matched
         }
         const { css: preflights } = await uno.generate('')
         const styleTag = createElement('style', { type: 'text/css' })
