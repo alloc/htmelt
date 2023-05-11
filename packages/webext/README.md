@@ -23,6 +23,46 @@ npm install --save-dev @htmelt/unocss
 
 &nbsp;
 
+## Quick Start
+
+First, make sure you have `manifest.json` in your gitignore file, because it will be generated automatically.
+
+```sh
+echo manifest.json >> .gitignore
+```
+
+If you have a manifest in your project already, move it into your `bundle.config.js` file.
+
+```js
+// bundle.config.js
+import webext from '@htmelt/webext'
+
+export default {
+  plugins: [
+    webext({
+      manifest: { ... },
+    })
+  ]
+}
+```
+
+Then, add the following to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "build": "htmelt",
+    "build:chrome": "htmelt --platform chrome",
+    "build:firefox": "htmelt --platform firefox",
+    "dev": "htmelt --watch",
+    "dev:chrome": "htmelt --watch --platform chrome",
+    "dev:firefox": "htmelt --watch --platform firefox"
+  }
+}
+```
+
+&nbsp;
+
 ## Usage
 
 When using the `htmelt` command in your terminal, you should include the
