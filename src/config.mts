@@ -57,7 +57,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))
     .filter(file => {
-      return !file.startsWith('./' + outDir)
+      return !file.startsWith(outDir + '/')
     })
     .map(file => ({
       file,
