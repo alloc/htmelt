@@ -156,7 +156,8 @@ function getManifestFiles(
       .flat() || []
 
   return {
-    scripts: [...backgroundScripts, ...contentScripts].filter(Boolean),
+    backgroundScripts,
+    contentScripts,
     ignoredFiles,
   }
 }

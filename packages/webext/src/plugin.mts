@@ -17,8 +17,13 @@ type InternalEvents = {
 
 export default (options: WebExtension.Options): Plugin =>
   async (config, flags) => {
-    const { manifest, scripts, ignoredFiles, backgroundPage } =
-      await loadManifest(options, config, flags)
+    const {
+      manifest,
+      ignoredFiles,
+      backgroundPage,
+      backgroundScripts,
+      contentScripts,
+    } = await loadManifest(options, config, flags)
 
     // Manifest V2 only.
     const backgroundEntry = backgroundPage
@@ -31,7 +36,8 @@ export default (options: WebExtension.Options): Plugin =>
     }
 
     // Add the web extension scripts to the build.
-    config.entries.push(...scripts.map(file => ({ file })))
+    config.entries.push(...backgroundScripts.map(file => ({ file })))
+    config.scripts.push(...contentScripts)
 
     const target = resolveTarget(options, flags)
     config.esbuild.define['import.meta.platform'] = JSON.stringify(
