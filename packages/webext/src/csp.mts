@@ -18,6 +18,8 @@ export function applyDevCSP(manifest: WebExtension.Manifest, config: Config) {
   csp['connect-src'].add(wsServerUrl)
   csp['script-src'] ||= new Set(csp['default-src'] || ["'self'"])
   csp['script-src'].add(httpServerUrl)
+  csp['script-src-elem'] ||= new Set(csp['default-src'] || ["'self'"])
+  csp['script-src-elem'].add(httpServerUrl)
   csp['style-src'] ||= new Set(csp['default-src'] || ["'self'"])
   csp['style-src'].add(httpServerUrl)
   csp['style-src'].add("'unsafe-inline'")

@@ -107,3 +107,23 @@ your tsconfig.
   }
 }
 ```
+
+### Conditional manifest
+
+The `manifest` option can be a function that takes the target platform. By default, the returned manifest object allows both MV3 and MV2 properties. If you want strict type safety for either MV2 or MV3, you can declare the return type explicitly.
+
+```ts
+// bundle.config.mts
+import { defineConfig } from 'htmelt/config.mjs'
+import webext, { WebExtension } from '@htmelt/webext'
+
+export default defineConfig({
+  plugins: [
+    webext({
+      manifest: (platform): WebExtension.ManifestV3 => ({
+        manifest_version: 2, // Type '2' is not assignable to type '3'. ts(2322)
+      }),
+    }),
+  ],
+})
+```

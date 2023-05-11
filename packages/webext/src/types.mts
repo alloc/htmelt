@@ -3,7 +3,7 @@ import type { Promisable } from 'type-fest'
 export namespace WebExtension {
   export type Options = {
     targets: (Target | Platform)[]
-    manifest: Manifest
+    manifest: Manifest | ((platform: Platform) => Manifest | AnyManifest)
     artifactsDir?: string
     run?: RunOptions
   }
@@ -42,6 +42,8 @@ export namespace WebExtension {
     keepProfileChanges?: boolean
     args?: string[]
   }
+
+  export interface AnyManifest extends JoinJsonDeep<ManifestV2, ManifestV3> {}
 
   export type Manifest = ManifestV2 | ManifestV3
 
@@ -385,7 +387,7 @@ export namespace WebExtension {
    * Runs before the manifest is used.
    */
   export type ManifestHook = (
-    manifest: Manifest,
+    manifest: AnyManifest,
     options: WebExtension.Options
   ) => Promisable<void>
 }
@@ -400,3 +402,56 @@ declare module '@htmelt/plugin' {
     platform?: WebExtension.Platform
   }
 }
+
+type JoinJsonDeep<T, U> = Id<
+  SafePartialOmit<T, SafeKeys<U>> &
+    SafePartialOmit<U, SafeKeys<T>> &
+    SomePartial<{
+      [K in Extract<SafeKeys<T>, SafeKeys<U>>]: [T[K], U[K & keyof U]] extends [
+        infer A,
+        infer B
+      ]
+        ?
+            | JoinJsonDeep<ExtractPlainObject<A>, ExtractPlainObject<B>>
+            | ExcludePlainObject<A>
+            | ExcludePlainObject<B>
+        : never
+    }>
+>
+
+// Return a union of every key whose property value can have U assigned
+// to it.
+type MatchKeys<T, U> = keyof T extends infer K
+  ? K extends keyof T
+    ? [U] extends [T[K]]
+      ? K
+      : never
+    : never
+  : never
+
+// Allow possibly undefined properties to be omitted.
+type SomePartial<T> = Id<
+  Omit<T, MatchKeys<T, undefined>> & Partial<Pick<T, MatchKeys<T, undefined>>>
+>
+
+type Id<T> = {} & { [P in keyof T]: T[P] }
+
+type ExtractPlainObject<T> = T extends object
+  ? T extends readonly any[]
+    ? never
+    : T
+  : never
+
+type ExcludePlainObject<T> = T extends object
+  ? T extends readonly any[]
+    ? T
+    : never
+  : T
+
+type SafePartialOmit<T, K> = [K] extends [never]
+  ? T
+  : [T] extends [never]
+  ? {}
+  : Partial<Omit<T, K & keyof T>>
+
+type SafeKeys<T> = T extends never ? never : keyof T

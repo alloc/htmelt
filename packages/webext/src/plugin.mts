@@ -1,3 +1,4 @@
+/// <reference path="../packages.d.ts" />
 import { Flags, Plugin } from '@htmelt/plugin'
 import chromeRemote from 'chrome-remote-interface'
 import exitHook from 'exit-hook'
@@ -9,7 +10,12 @@ import { cmd as webExtCmd } from 'web-ext'
 import { applyDevCSP } from './csp.mjs'
 import { isManifestV3, loadManifest } from './manifest.mjs'
 import { WebExtension } from './types.mjs'
-import { findFreeTcpPort, replaceHomeDir, toArray } from './utils.mjs'
+import {
+  findFreeTcpPort,
+  isFirefoxTarget,
+  replaceHomeDir,
+  toArray,
+} from './utils.mjs'
 
 type InternalEvents = {
   reload: (() => Promisable<void>)[]
@@ -17,13 +23,24 @@ type InternalEvents = {
 
 export default (options: WebExtension.Options): Plugin =>
   async (config, flags) => {
+    const target = resolveTarget(options, flags)
+
+    config.esbuild.define['import.meta.platform'] = JSON.stringify(
+      target.platform
+    )
+
+    // Firefox's CSP handling requires HTTPS dev server.
+    if (flags.watch && isFirefoxTarget(target)) {
+      config.mergeServerConfig({ https: true })
+    }
+
     const {
       manifest,
       ignoredFiles,
       backgroundPage,
       backgroundScripts,
       contentScripts,
-    } = await loadManifest(options, config, flags)
+    } = await loadManifest(target, options, config, flags)
 
     // Manifest V2 only.
     const backgroundEntry = backgroundPage
@@ -38,11 +55,6 @@ export default (options: WebExtension.Options): Plugin =>
     // Add the web extension scripts to the build.
     config.entries.push(...backgroundScripts.map(file => ({ file })))
     config.scripts.push(...contentScripts)
-
-    const target = resolveTarget(options, flags)
-    config.esbuild.define['import.meta.platform'] = JSON.stringify(
-      target.platform
-    )
 
     // Firefox doesn't need the webextension-polyfill, so let's ensure
     // it can be dropped from the bundle.
@@ -68,20 +80,8 @@ export default (options: WebExtension.Options): Plugin =>
 
     return {
       async initialBuild() {
+        // Write inline rules to new files in the build directory.
         if (isManifestV3(manifest)) {
-          // Remove permissions meant for other targets.
-          if (manifest.permissions) {
-            const perms = new Set(manifest.permissions)
-            perms.forEach(perm => {
-              // Firefox only (MV3)
-              if (perm === 'webRequestBlocking' && !isFirefox(target)) {
-                perms.delete(perm)
-              }
-            })
-            manifest.permissions = [...perms]
-          }
-
-          // Write inline rules to new files in the build directory.
           manifest.declarative_net_request?.rule_resources.forEach(
             (resource, index, resources) => {
               if ('rules' in resource) {
@@ -107,7 +107,7 @@ export default (options: WebExtension.Options): Plugin =>
 
         // Pack the web extension for distribution.
         if (!flags.watch) {
-          writeManifest(target.platform, manifest)
+          writeManifest(manifest)
 
           await webExtCmd.build({
             sourceDir: process.cwd(),
@@ -127,7 +127,7 @@ export default (options: WebExtension.Options): Plugin =>
       },
       hmr(clients) {
         applyDevCSP(manifest, config)
-        writeManifest(target.platform, manifest)
+        writeManifest(manifest)
 
         developExtension(target, options, manifest, clients, events).catch(
           console.error
@@ -184,12 +184,6 @@ function resolveTarget(
   }
 
   return target
-}
-
-function isFirefox(
-  target: WebExtension.Target
-): target is WebExtension.FirefoxTarget {
-  return target.platform.startsWith('firefox')
 }
 
 async function developExtension(
@@ -530,50 +524,6 @@ async function retryForever<T>(task: () => Promise<T>) {
   }
 }
 
-function writeManifest(
-  platform: WebExtension.Platform,
-  manifest: WebExtension.Manifest
-) {
-  if (isManifestV3(manifest)) {
-    processBackgroundWorkerMV3(platform, manifest)
-  }
+function writeManifest(manifest: WebExtension.Manifest) {
   fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2))
-}
-
-function processBackgroundWorkerMV3(
-  platform: WebExtension.Platform,
-  manifest: WebExtension.ManifestV3
-) {
-  let bg = manifest.background
-  if (!bg) {
-    return
-  }
-
-  // Firefox doesn't support background.service_worker, so rewrite it
-  // to be an event-driven background script.
-  if (platform !== 'chromium') {
-    if (bg.scripts || bg.service_worker) {
-      bg = {
-        scripts: bg.scripts || [bg.service_worker!],
-        persistent: false,
-      }
-    } else {
-      bg = undefined
-    }
-  }
-
-  // Chromium uses background.service_worker, so remove the
-  // background.scripts property if both are defined.
-  else if (bg.scripts) {
-    if (bg.service_worker) {
-      bg = {
-        service_worker: bg.service_worker,
-        type: bg.type,
-      }
-    } else {
-      bg = undefined
-    }
-  }
-
-  manifest.background = bg
 }
