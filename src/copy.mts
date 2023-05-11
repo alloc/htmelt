@@ -49,5 +49,7 @@ export async function copyFiles(
       copied++
     }
   }
-  console.log(cyan('copied %s %s'), copied, copied == 1 ? 'file' : 'files')
+  if (copied) {
+    console.log(cyan('copied %s %s'), copied, copied == 1 ? 'file' : 'files')
+  }
 }
