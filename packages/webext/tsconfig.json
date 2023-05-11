@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src", "packages.d.ts"],
   "compilerOptions": {
     "declaration": true,
     "module": "esnext",
