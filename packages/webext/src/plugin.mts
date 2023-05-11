@@ -6,6 +6,7 @@ import { cyan, yellow } from 'kleur/colors'
 import path from 'path'
 import { Promisable } from 'type-fest'
 import { cmd as webExtCmd } from 'web-ext'
+import { applyDevCSP } from './csp.mjs'
 import { isManifestV3, loadManifest } from './manifest.mjs'
 import { WebExtension } from './types.mjs'
 import { findFreeTcpPort, replaceHomeDir, toArray } from './utils.mjs'
@@ -82,7 +83,7 @@ export default (options: WebExtension.Options): Plugin =>
 
         // Pack the web extension for distribution.
         if (!flags.watch) {
-          writeManifest(target.platform, structuredClone(manifest))
+          writeManifest(target.platform, manifest)
 
           await webExtCmd.build({
             sourceDir: process.cwd(),
@@ -101,6 +102,9 @@ export default (options: WebExtension.Options): Plugin =>
         }
       },
       hmr(clients) {
+        applyDevCSP(manifest, config)
+        writeManifest(target.platform, manifest)
+
         developExtension(target, options, manifest, clients, events).catch(
           console.error
         )
@@ -200,8 +204,6 @@ async function developExtension(
     args.push('--remote-debugging-port', port.toString())
     params.args = args
   }
-
-  writeManifest(target.platform, structuredClone(manifest))
 
   const runner = await webExtCmd.run({
     ...params,
