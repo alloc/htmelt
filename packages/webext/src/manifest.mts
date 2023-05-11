@@ -56,8 +56,6 @@ export async function loadManifest(
   return {
     ...getManifestFiles(manifest as WebExtension.Manifest, config, flags),
     manifest: manifest as WebExtension.Manifest,
-    backgroundPage:
-      manifest.manifest_version == 2 ? manifest.background?.page : undefined,
   }
 }
 
@@ -160,10 +158,11 @@ function getManifestFiles(
   keepFiles(manifest.chrome_url_overrides)
   keepFiles(manifest.icons)
 
+  let backgroundPage: string | undefined
   let backgroundScripts: string[]
   if (manifest.manifest_version == 2) {
+    backgroundPage = keepFiles(manifest.background, 'page')[0]
     backgroundScripts = keepFiles(manifest.background?.scripts)
-    keepFiles(manifest.background, 'page')
     keepFiles(manifest.web_accessible_resources)
     keepFiles(manifest.browser_action, 'default_popup')
     keepFiles(manifest.browser_action?.default_icon)
@@ -185,6 +184,7 @@ function getManifestFiles(
       .flat() || []
 
   return {
+    backgroundPage,
     backgroundScripts,
     contentScripts,
     ignoredFiles,
