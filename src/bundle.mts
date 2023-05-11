@@ -8,6 +8,7 @@ import {
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
+import glob from 'glob'
 import { cyan, red, yellow } from 'kleur/colors'
 import mitt, { Emitter } from 'mitt'
 import * as mime from 'mrmime'
@@ -15,6 +16,7 @@ import * as path from 'path'
 import { performance } from 'perf_hooks'
 import { debounce } from 'ts-debounce'
 import { parse as parseURL } from 'url'
+import { promisify } from 'util'
 import * as uuid from 'uuid'
 import * as ws from 'ws'
 import { buildClientConnection } from './clientUtils.mjs'
@@ -151,6 +153,18 @@ export async function bundle(config: Config, flags: Flags) {
           }
         }
 
+        let isolatedScripts: string[] | undefined
+        if (config.scripts) {
+          const matches = await Promise.all(
+            config.scripts.map(p => promisify(glob)(p))
+          )
+          isolatedScripts = Array.from(new Set(matches.flat()), p =>
+            path.resolve(p)
+          )
+        } else {
+          isolatedScripts = []
+        }
+
         await Promise.all([
           Promise.all(
             Array.from(bundles, async ([bundleId, bundle]) => {
@@ -168,7 +182,7 @@ export async function bundle(config: Config, flags: Flags) {
           ...Object.values(documents).map(document =>
             buildHTML(document, config, flags)
           ),
-          ...config.scripts.map(srcPath => {
+          ...isolatedScripts.map(srcPath => {
             console.log(yellow('⌁'), baseRelative(srcPath))
             if (flags.watch) {
               return compileSeparateEntry(srcPath, config, {

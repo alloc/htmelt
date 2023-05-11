@@ -64,14 +64,6 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       file,
     }))
 
-  let scripts: string[] | undefined
-  if (userConfig.scripts) {
-    const matches = await Promise.all(
-      userConfig.scripts.map(p => promisify(glob)(p))
-    )
-    scripts = Array.from(new Set(matches.flat()), p => path.resolve(p))
-  }
-
   const plugins = preDefaultPlugins.concat(
     userConfig.plugins || [],
     postDefaultPlugins
@@ -159,9 +151,9 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     ],
     linkedPackages: flags.watch ? findLinkedPackages(process.cwd()) : undefined,
     fsAllowedDirs: new Set(),
-    copy: userConfig.copy ?? [],
-    scripts: scripts || [],
-    htmlMinifierTerser: userConfig.htmlMinifierTerser ?? {},
+    copy: userConfig.copy || [],
+    scripts: userConfig.scripts || [],
+    htmlMinifierTerser: userConfig.htmlMinifierTerser || {},
     esbuild: {
       ...userConfig.esbuild,
       plugins: userConfig.esbuild?.plugins || [],
