@@ -5,7 +5,6 @@ import {
   Flags,
   HttpsConfig,
   Plugin,
-  ServerConfig,
   UserConfig,
   baseRelative,
 } from '@htmelt/plugin'
@@ -68,8 +67,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     userConfig.plugins || [],
     postDefaultPlugins
   )
+
   const browsers = userConfig.browsers ?? '>=0.25%, not dead'
-  const server = await loadServerConfig(userConfig.server || {})
+
+  let serverUrl: URL | undefined
 
   const api: ConfigAPI = {
     watch(paths, options) {
@@ -109,19 +110,52 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     },
     resolveDevUrl(id, importer) {
       let url = config.resolve(id, importer)
-      if (url.protocol == 'file:') {
-        url = new URL(baseRelative(url.pathname), config.server.url)
+      if (url.protocol === 'file:') {
+        url = new URL(baseRelative(url.pathname), serverUrl)
       }
       return url
     },
-    resolve(id, importer = config.server.url) {
-      if (typeof importer == 'string') {
+    resolve(id, importer = serverUrl) {
+      if (typeof importer === 'string') {
         importer = new URL(importer, 'file:')
       }
-      if (id[0] == '/' && importer.protocol == 'file:') {
+      if (id[0] === '/' && importer?.protocol === 'file:') {
         return new URL('file://' + process.cwd() + id)
       }
       return new URL(id, importer)
+    },
+    mergeServerConfig(config) {
+      userConfig.server = {
+        ...userConfig.server,
+        ...config,
+      }
+    },
+    async loadServerConfig() {
+      const serverConfig = userConfig.server || {}
+      const https =
+        serverConfig.https != true
+          ? serverConfig.https || undefined
+          : ({} as HttpsConfig)
+
+      let port = serverConfig.port || 0
+      if (port == 0) {
+        port = await findFreeTcpPort()
+      }
+
+      const protocol = https ? 'https' : 'http'
+      const url = (serverUrl = new URL(`${protocol}://localhost:${port}`))
+
+      config.esbuild.define['import.meta.env.DEV_URL'] = env(url)
+      config.esbuild.define['import.meta.env.HMR_URL'] = env(
+        (https ? 'wss' : 'ws') + '://localhost:' + port
+      )
+
+      return (config.server = {
+        ...serverConfig,
+        https,
+        port,
+        url,
+      })
     },
     // Set by the internal ./plugins/devModules.mjs plugin.
     // Not available during plugin setup.
@@ -162,10 +196,6 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         ...userConfig.esbuild?.define,
         'process.env.NODE_ENV': env(nodeEnv),
         'import.meta.env.DEV': env(nodeEnv == 'development'),
-        'import.meta.env.DEV_URL': env(server.url),
-        'import.meta.env.HMR_URL': env(
-          (server.https ? 'wss' : 'ws') + '://localhost:' + server.port
-        ),
       },
     },
     lightningCss: {
@@ -178,7 +208,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         ...userConfig.lightningCss?.drafts,
       },
     },
-    server: flags.watch ? server : null!,
+    server: null!,
     ...api,
   }
 
@@ -200,25 +230,6 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   }
 
   return config
-}
-
-async function loadServerConfig(config: ServerConfig) {
-  const https =
-    config.https != true ? config.https || undefined : ({} as HttpsConfig)
-
-  const protocol = https ? 'https' : 'http'
-
-  let port = config.port || 0
-  if (port == 0) {
-    port = await findFreeTcpPort()
-  }
-
-  return {
-    ...config,
-    https,
-    port,
-    url: new URL(`${protocol}://localhost:${port}`),
-  }
 }
 
 async function loadPlugin(plugin: Promise<any>) {

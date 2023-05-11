@@ -455,19 +455,21 @@ export async function bundle(config: Config, flags: Flags) {
 }
 
 async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
-  let createServer: typeof import('http').createServer
-  let serverOptions: import('https').ServerOptions | undefined
-  if (config.server.https) {
+  const { url, port, https } = await config.loadServerConfig()
+
+  let createServer: typeof import('https').createServer
+  let cert: string | undefined
+  let key: string | undefined
+  if (https) {
     createServer = (await import('https')).createServer
-    serverOptions = config.server.https
-    if (!serverOptions.cert) {
-      const cert = await getCertificate('node_modules/.htmelt/self-signed')
-      serverOptions.cert = cert
-      serverOptions.key = cert
+    if (https.cert) {
+      cert = https.cert
+      key = https.key
+    } else {
+      key = cert = await getCertificate('node_modules/.htmelt/self-signed')
     }
   } else {
-    createServer = (await import('http')).createServer
-    serverOptions = {}
+    createServer = (await import('http')).createServer as any
   }
 
   // The dev server allows access to files within these directories.
@@ -475,7 +477,7 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     `^/(${[config.build, config.assets].join('|')})/`
   )
 
-  const server = createServer(serverOptions, async (req, response) => {
+  const server = createServer({ cert, key }, async (req, response) => {
     const request = Object.assign(req, parseURL(req.url!)) as Plugin.Request
     request.searchParams = new URLSearchParams(request.search || '')
 
@@ -555,11 +557,11 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     response.end()
   })
 
-  server.listen(config.server.port, () => {
+  server.listen(port, () => {
     console.log(
       cyan('%s server listening on port %s'),
-      config.server.url.protocol.slice(0, -1),
-      config.server.port
+      url.protocol.slice(0, -1),
+      port
     )
   })
 
