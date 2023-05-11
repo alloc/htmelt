@@ -90,8 +90,8 @@ function getManifestFiles(
       | string
       | string[]
       | Record<string, string | string[]>
-      | chrome.runtime.ManifestAction
-      | chrome.runtime.ManifestIcons
+      | WebExtension.ManifestAction
+      | WebExtension.ManifestIcons
       | undefined,
     key?: string | number
   ): string[] => {
