@@ -44,6 +44,24 @@ export default (options: WebExtension.Options): Plugin =>
       target.platform
     )
 
+    // Firefox doesn't need the webextension-polyfill, so let's ensure
+    // it can be dropped from the bundle.
+    if (target.platform !== 'chromium') {
+      config.esbuild.plugins.push({
+        name: 'htmelt-webext:polyfill',
+        setup(build) {
+          const namespace = 'webextension-polyfill'
+          build.onResolve({ filter: /^webextension-polyfill$/ }, args => ({
+            path: args.path,
+            namespace,
+          }))
+          build.onLoad({ filter: /.*/, namespace }, () => ({
+            contents: 'export default globalThis.browser',
+          }))
+        },
+      })
+    }
+
     const events: InternalEvents = {
       reload: [],
     }
