@@ -1,4 +1,3 @@
-/// <reference types="chrome" />
 import { Config, Flags } from '@htmelt/plugin'
 import fs from 'fs'
 import path from 'path'
@@ -119,8 +118,8 @@ function getManifestFiles(
       | string
       | string[]
       | Record<string, string | string[]>
-      | chrome.runtime.ManifestAction
-      | chrome.runtime.ManifestIcons
+      | WebExtension.ManifestAction
+      | WebExtension.ManifestIcons
       | undefined,
     key?: string | number
   ): string[] => {
