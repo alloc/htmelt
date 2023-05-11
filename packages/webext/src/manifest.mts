@@ -149,7 +149,10 @@ function getManifestFiles(
 
   const contentScripts =
     manifest.content_scripts
-      ?.map(script => [...keepFiles(script.js), ...keepFiles(script.css)])
+      ?.map(script => {
+        keepFiles(script.css)
+        return keepFiles(script.js)
+      })
       .flat() || []
 
   return {
