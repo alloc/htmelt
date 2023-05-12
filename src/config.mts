@@ -219,7 +219,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
   await Promise.all(
     plugins.map(async setup => {
-      config.plugins.push(await setup(config, flags))
+      const plugin = await setup(config, flags)
+      if (plugin) {
+        config.plugins.push(plugin)
+      }
     })
   )
 

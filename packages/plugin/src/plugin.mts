@@ -10,7 +10,7 @@ import type { Config, Entry } from './config.mjs'
 import type { Flags } from './flags.mjs'
 
 export interface Plugin {
-  (config: Config, flags: Flags): Promisable<PluginInstance>
+  (config: Config, flags: Flags): Promisable<PluginInstance | void>
 }
 
 export interface PluginInstance {
