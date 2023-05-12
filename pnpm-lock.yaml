@@ -23,7 +23,7 @@ importers:
       convert-source-map: ^2.0.0
       critters: ^0.0.16
       esbuild: ^0.17.12
-      esbuild-extra: ^0.1.9
+      esbuild-extra: ^0.2.0
       execa: ^7.0.0
       fast-glob: ^3.2.12
       glob: ^8.1.0
@@ -57,7 +57,7 @@ importers:
       convert-source-map: 2.0.0
       critters: 0.0.16
       esbuild: 0.17.17
-      esbuild-extra: 0.1.10_l5wnii47wbeyqqaa4amgkfwe7m
+      esbuild-extra: 0.2.0_l5wnii47wbeyqqaa4amgkfwe7m
       execa: 7.1.1
       fast-glob: 3.2.12
       glob: 8.1.0
@@ -94,7 +94,7 @@ importers:
       '@types/parse5': ^6.0.1
       cac: ^6.7.14
       esbuild: ^0.17.12
-      esbuild-extra: ^0.1.9
+      esbuild-extra: ^0.2.0
       md5-hex: ^4.0.0
       mitt: ^3.0.0
       parse5: ^6.0.1
@@ -103,7 +103,7 @@ importers:
     dependencies:
       cac: 6.7.14
       esbuild: 0.17.17
-      esbuild-extra: 0.1.9_esbuild@0.17.17
+      esbuild-extra: 0.2.0_esbuild@0.17.17
       parse5: 6.0.1
       picomatch: 2.3.1
     devDependencies:
@@ -113,6 +113,23 @@ importers:
       md5-hex: 4.0.0
       mitt: 3.0.0
       type-fest: 3.8.0
+
+  packages/preval:
+    specifiers:
+      '@alloc/fast-rimraf': ^1.0.8
+      '@htmelt/plugin': workspace:^0.3.0
+      '@types/serialize-javascript': ^5.0.2
+      meriyah: ^4.3.5
+      nebu: ^2.3.7
+      serialize-javascript: ^6.0.1
+    dependencies:
+      '@htmelt/plugin': link:../plugin
+      meriyah: 4.3.5
+      nebu: 2.3.8
+      serialize-javascript: 6.0.1
+    devDependencies:
+      '@alloc/fast-rimraf': 1.0.8
+      '@types/serialize-javascript': 5.0.2
 
   packages/unocss:
     specifiers:
@@ -875,6 +892,10 @@ packages:
 
   /@types/parse5/6.0.3:
     resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}
+    dev: true
+
+  /@types/serialize-javascript/5.0.2:
+    resolution: {integrity: sha512-BRLlwZzRoZukGaBtcUxkLsZsQfWZpvog6MZk3PWQO9Q6pXmXFzjU5iGzZ+943evp6tkkbN98N1Z31KT0UG1yRw==}
     dev: true
 
   /@types/ws/8.5.4:
@@ -1839,21 +1860,8 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
-  /esbuild-extra/0.1.10_l5wnii47wbeyqqaa4amgkfwe7m:
-    resolution: {integrity: sha512-p27X76WJIdKDTCzrrBwjnQ/xjyztb7jmlC6/Wje4JJaYS1v5PymxK3mzAdlJLov9JXFhs3iJsIzAsHRWg/66Zw==}
-    peerDependencies:
-      esbuild: '>=0.15'
-    dependencies:
-      '@ampproject/remapping': 2.2.1
-      convert-source-map: 2.0.0
-      esbuild: 0.17.17
-      tsconfck: 2.1.1_typescript@4.9.5
-    transitivePeerDependencies:
-      - typescript
-    dev: false
-
-  /esbuild-extra/0.1.9_esbuild@0.17.17:
-    resolution: {integrity: sha512-HXDBPDwlNj+du8St9Fk9FUGMjrMxXtXby6iqBb34iuIjj20EDIz8uE/0Pz1QO1aS3og7LaRA85jF2HzWIQRlgg==}
+  /esbuild-extra/0.2.0_esbuild@0.17.17:
+    resolution: {integrity: sha512-Xmkmlw4L7HiVJwd8WA/u8L1JsuOn2m7Ezab+W373o2Jt00HvkMsiNS+PgByV2M72Nm+NET2PiwEkcu6vjX2VVw==}
     peerDependencies:
       esbuild: '>=0.15'
     dependencies:
@@ -1861,6 +1869,19 @@ packages:
       convert-source-map: 2.0.0
       esbuild: 0.17.17
       tsconfck: 2.1.1
+    transitivePeerDependencies:
+      - typescript
+    dev: false
+
+  /esbuild-extra/0.2.0_l5wnii47wbeyqqaa4amgkfwe7m:
+    resolution: {integrity: sha512-Xmkmlw4L7HiVJwd8WA/u8L1JsuOn2m7Ezab+W373o2Jt00HvkMsiNS+PgByV2M72Nm+NET2PiwEkcu6vjX2VVw==}
+    peerDependencies:
+      esbuild: '>=0.15'
+    dependencies:
+      '@ampproject/remapping': 2.2.1
+      convert-source-map: 2.0.0
+      esbuild: 0.17.17
+      tsconfck: 2.1.1_typescript@4.9.5
     transitivePeerDependencies:
       - typescript
     dev: false
@@ -3701,6 +3722,12 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
+  /randombytes/2.1.0:
+    resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
+    dependencies:
+      safe-buffer: 5.2.1
+    dev: false
+
   /rc/1.2.8:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
@@ -3919,6 +3946,12 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: false
+
+  /serialize-javascript/6.0.1:
+    resolution: {integrity: sha512-owoXEFjWRllis8/M1Q+Cw5k8ZH40e3zhp/ovX+Xr/vi1qj6QesbyXXViFbpNvWvPNAD62SutwEXavefrLJWj7w==}
+    dependencies:
+      randombytes: 2.1.0
     dev: false
 
   /setimmediate/1.0.5:

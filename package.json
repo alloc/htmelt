@@ -61,7 +61,7 @@
     "convert-source-map": "^2.0.0",
     "critters": "^0.0.16",
     "esbuild": "^0.17.12",
-    "esbuild-extra": "^0.1.9",
+    "esbuild-extra": "^0.2.0",
     "execa": "^7.0.0",
     "fast-glob": "^3.2.12",
     "glob": "^8.1.0",
