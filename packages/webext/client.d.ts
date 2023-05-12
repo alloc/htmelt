@@ -1,4 +1,4 @@
-import type { WebExtension } from './index.d.ts'
+import type { WebExtension } from './dist/types.mjs'
 
 declare module '@htmelt/plugin/dist/importMeta.mjs' {
   export interface ImportMeta {
