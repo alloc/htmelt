@@ -96,9 +96,7 @@ export async function bundle(config: Config, flags: Flags) {
 
       const { metafile } = await context.rebuild()
       bundle.metafile = metafile
-      bundle.inputs = Object.keys(metafile.inputs).map(file =>
-        baseRelative(file)
-      )
+      bundle.inputs = toBundleInputs(metafile)
     }
 
     return {
@@ -198,10 +196,7 @@ export async function bundle(config: Config, flags: Flags) {
                   outPath,
                   context,
                   metafile,
-                  inputs: Object.keys(metafile.inputs).map(file => {
-                    config.watcher!.add(file)
-                    return baseRelative(file)
-                  }),
+                  inputs: toBundleInputs(metafile, config.watcher),
                 }
                 createDir(outPath)
                 fs.writeFileSync(outPath, outputFiles[0].text)
@@ -404,9 +399,7 @@ export async function bundle(config: Config, flags: Flags) {
           .then(({ outputFiles, metafile }) => {
             fs.writeFileSync(script.outPath, outputFiles[0].text)
             script.metafile = metafile
-            script.inputs = Object.keys(metafile.inputs).map(file =>
-              baseRelative(file)
-            )
+            script.inputs = toBundleInputs(metafile)
           })
           .catch(error => {
             errors.push(error)
@@ -726,4 +719,18 @@ async function getCertificate(cacheDir: string) {
     } catch {}
     return content
   }
+}
+
+export function toBundleInputs(
+  metafile: esbuild.Metafile,
+  watcher?: { add(file: string): void }
+) {
+  return Object.keys(metafile.inputs).map(file => {
+    // Virtual files have a namespace prefix.
+    if (file.includes(':')) {
+      return file
+    }
+    watcher?.add(file)
+    return baseRelative(file)
+  })
 }

@@ -1,5 +1,6 @@
-import { Plugin, baseRelative } from '@htmelt/plugin'
+import { Plugin } from '@htmelt/plugin'
 import path from 'path'
+import { toBundleInputs } from '../bundle.mjs'
 
 /**
  * By default, any scripts in your HTML files are rewritten to use the
@@ -26,9 +27,7 @@ export const liveBundlesPlugin: Plugin = config => {
         ({ metafile }) => {
           dirtyBundles.delete(bundle)
           bundle.metafile = metafile
-          bundle.inputs = Object.keys(metafile.inputs).map(file =>
-            baseRelative(file)
-          )
+          bundle.inputs = toBundleInputs(metafile)
         },
         error => {
           console.error(
