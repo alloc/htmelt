@@ -7,7 +7,7 @@ import { buildCSSFile } from '../css.mjs'
  * into the document.
  */
 export const cssCodeSplit: Plugin = (config, flags) => {
-  const esbuildPlugin: import('esbuild').Plugin = {
+  config.esbuild.plugins.push({
     name: 'esbuild-plugin-inline-css',
     setup(build) {
       build.onLoad({ filter: /\.css$/ }, async args => {
@@ -31,9 +31,7 @@ export const cssCodeSplit: Plugin = (config, flags) => {
         })
       )
     },
-  }
-  config.esbuild.plugins.push(esbuildPlugin)
-  return {}
+  })
 }
 
 function getCSSInjectionScript(

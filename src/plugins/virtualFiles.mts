@@ -31,6 +31,4 @@ export const virtualFilePlugin: Plugin = config => {
       })
     },
   })
-
-  return {}
 }

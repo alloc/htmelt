@@ -295,8 +295,6 @@ export const devModulesPlugin: Plugin = async config => {
       })
     },
   })
-
-  return {}
 }
 
 function jsonAccessor(name: string) {
