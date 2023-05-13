@@ -98,20 +98,18 @@ importers:
       md5-hex: ^4.0.0
       mitt: ^3.0.0
       parse5: ^6.0.1
-      picomatch: ^2.3.1
       type-fest: ^3.6.0
     dependencies:
+      '@rollup/pluginutils': 5.0.2
       cac: 6.7.14
       esbuild: 0.17.17
       esbuild-extra: 0.2.0_esbuild@0.17.17
-      parse5: 6.0.1
-      picomatch: 2.3.1
-    devDependencies:
-      '@alloc/fast-rimraf': 1.0.8
-      '@rollup/pluginutils': 5.0.2
-      '@types/parse5': 6.0.3
       md5-hex: 4.0.0
       mitt: 3.0.0
+      parse5: 6.0.1
+    devDependencies:
+      '@alloc/fast-rimraf': 1.0.8
+      '@types/parse5': 6.0.3
       type-fest: 3.8.0
 
   packages/preval:
@@ -780,7 +778,7 @@ packages:
       '@types/estree': 1.0.0
       estree-walker: 2.0.2
       picomatch: 2.3.1
-    dev: true
+    dev: false
 
   /@sindresorhus/is/5.3.0:
     resolution: {integrity: sha512-CX6t4SYQ37lzxicAqsBtxA3OseeoVrh9cSJ5PFYam0GksYlupRfy1A+Q4aYD3zvcfECLc0zO2u+ZnR2UYKvCrw==}
@@ -842,7 +840,7 @@ packages:
 
   /@types/estree/1.0.0:
     resolution: {integrity: sha512-WulqXMDUTYAXCjZnk6JtIHPigp55cVtDgDrO2gHRwhyJto21+1zbVCtOYB2L1F9w4qCQ0rOGWBnBe0FNTiEJIQ==}
-    dev: true
+    dev: false
 
   /@types/etag/1.8.1:
     resolution: {integrity: sha512-bsKkeSqN7HYyYntFRAmzcwx/dKW4Wa+KVMTInANlI72PWLQmOpZu96j0OqHZGArW4VQwCmJPteQlXaUDeOB0WQ==}
@@ -1165,7 +1163,6 @@ packages:
 
   /blueimp-md5/2.19.0:
     resolution: {integrity: sha512-DRQrD6gJyy8FbiE4s+bDoXS9hiW3Vbx5uCdwvcCf3zLHL+Iv7LtGHLpr+GZV8rHG8tK766FGYBwRbu8pELTt+w==}
-    dev: true
 
   /boolbase/1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -2054,7 +2051,7 @@ packages:
 
   /estree-walker/2.0.2:
     resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
-    dev: true
+    dev: false
 
   /esutils/2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
@@ -3095,7 +3092,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       blueimp-md5: 2.19.0
-    dev: true
+    dev: false
 
   /mem/5.1.1:
     resolution: {integrity: sha512-qvwipnozMohxLXG1pOqoLiZKNkC4r4qqRucSoDwXowsNGDSULiqFTRUF05vcZWnwJSG22qTsynQhxbaMtnX9gw==}
@@ -3196,6 +3193,7 @@ packages:
 
   /mitt/3.0.0:
     resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
+    dev: false
 
   /mkdirp/0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
