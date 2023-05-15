@@ -65,7 +65,7 @@ export const cssReloadPlugin: Plugin = (config, flags) => {
             if (!update) continue
             await Promise.all(
               Array.from(clients, client =>
-                client.evaluateModule('./client/cssReload.js', update)
+                client.evaluateModule('./client/cssReload.mjs', update)
               )
             )
           }
