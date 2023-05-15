@@ -1,11 +1,22 @@
 const modules: Record<string, any> = {}
 
+const missingImports = localStorage.getItem('missingImports')?.split(',') || []
+
 globalThis.htmelt = {
   modules,
   import(id) {
     const mod = modules[id]
     if (!mod) {
+      if (!missingImports.includes(id)) {
+        missingImports.push(id)
+        localStorage.setItem('missingImports', missingImports.join(','))
+        location.reload()
+      }
       throw Error('Module not found: ' + id)
+    }
+    if (missingImports.includes(id)) {
+      missingImports.splice(missingImports.indexOf(id), 1)
+      localStorage.setItem('missingImports', missingImports.join(','))
     }
     return mod.exports
   },
