@@ -3,12 +3,15 @@
  */
 export interface Flags {
   watch?: boolean
-  minify?: boolean
   outDir?: string
-  critical?: boolean
 
   /** Arguments without an associated flag. */
   pre: string[]
   /** Arguments after the `--` token. */
   post: string[]
+}
+
+export interface BundleFlags extends Flags {
+  minify?: boolean
+  critical?: boolean
 }

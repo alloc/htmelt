@@ -10,11 +10,11 @@ import * as fs from 'fs'
 import * as net from 'net'
 import * as path from 'path'
 
-export function parseFlags(): Flags {
+export function parseFlags(cli = cac()): Flags {
   const {
     args: pre,
     options: { '--': post, ...flags },
-  } = cac().parse() as any
+  } = cli.parse() as any
   flags.pre = pre
   flags.post = post
   return flags

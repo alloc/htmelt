@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 
-import { CLI } from '@htmelt/plugin'
+import { BundleFlags, CLI } from '@htmelt/plugin'
 import cac from 'cac'
 import { bundle } from './bundle.mjs'
 import { loadBundleConfig } from './config.mjs'
 import { parseFlags } from './utils.mjs'
 
 const cli = cac('htmelt')
+  .option('-o, --outDir <dir>', `[string] set the build directory`)
+  .option('--watch', `[boolean]`)
+
 const commands: CLI['commands'] = {
   default: cli
     .command('')
-    .option('-o, --outDir', `[string] set the build directory`)
-    .option('--watch', `[boolean]`)
     .option('--minify', `[boolean]`)
     .option('--critical', `[boolean]`),
 }
 
-const flags = parseFlags()
+const flags = parseFlags(cli)
 process.env.NODE_ENV ||= flags.watch ? 'development' : 'production'
 
 loadBundleConfig(flags, {
@@ -25,7 +26,7 @@ loadBundleConfig(flags, {
     return (commands[rawName] = cli.command(rawName, description, config))
   },
 }).then(config => {
-  commands.default.action(async () => {
+  commands.default.action(async (flags: BundleFlags) => {
     const context = await bundle(config, flags)
     if (!flags.watch) {
       context.dispose()

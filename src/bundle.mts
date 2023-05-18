@@ -1,6 +1,6 @@
 import {
+  BundleFlags,
   Config,
-  Flags,
   Plugin,
   ServePlugin,
   baseRelative,
@@ -47,7 +47,7 @@ type PartialBundle = {
   inputs?: string[]
 }
 
-export async function bundle(config: Config, flags: Flags) {
+export async function bundle(config: Config, flags: BundleFlags) {
   if (config.deletePrev) {
     fs.rmSync(config.build, { force: true, recursive: true })
   }

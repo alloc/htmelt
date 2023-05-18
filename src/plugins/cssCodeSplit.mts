@@ -1,4 +1,4 @@
-import { Config, Flags, Plugin, baseRelative, md5Hex } from '@htmelt/plugin'
+import { Config, Plugin, baseRelative, md5Hex } from '@htmelt/plugin'
 import { buildCSSFile } from '../css.mjs'
 
 /**
@@ -38,7 +38,7 @@ function getCSSInjectionScript(
   code: string,
   file: string,
   config: Config,
-  flags: Flags
+  flags: { watch?: boolean; minify?: boolean }
 ) {
   config.registerCssEntry?.(file, code)
 
