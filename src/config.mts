@@ -54,9 +54,11 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
   const srcDir = normalizePath(userConfig.src ?? 'src')
   const outDir = normalizePath(flags.outDir || (userConfig.build ?? 'build'))
+
+  const srcDirPrefix = srcDir ? srcDir + '/' : srcDir
   const outDirPrefix = outDir + '/'
 
-  const entries = (await promisify(glob)(srcDir + '/**/*.html'))
+  const entries = (await promisify(glob)(srcDirPrefix + '**/*.html'))
     .filter(file => {
       return !file.startsWith(outDirPrefix)
     })
