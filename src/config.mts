@@ -52,8 +52,8 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     )
   }
 
-  const srcDir = path.resolve(userConfig.src ?? 'src')
-  const outDir = path.resolve(flags.outDir || (userConfig.build ?? 'build'))
+  const srcDir = normalizePath(userConfig.src ?? 'src')
+  const outDir = normalizePath(flags.outDir || (userConfig.build ?? 'build'))
   const outDirPrefix = outDir + '/'
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))
@@ -280,4 +280,9 @@ function findLinkedPackages(root: string, linkedPackages = new Set<string>()) {
     }
   }
   return linkedPackages
+}
+
+function normalizePath(p: string) {
+  p = path.normalize(p)
+  return p === '.' ? '' : p.replace(/\/$/, '')
 }
