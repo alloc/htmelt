@@ -54,10 +54,12 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
   const srcDir = (userConfig.src ?? 'src').replace(/\/$/, '')
   const outDir = (userConfig.build ?? 'build').replace(/\/$/, '')
+  const outDirPrefix =
+    outDir.replace(/^(\.\/)?/, srcDir[0] === '.' ? './' : '') + '/'
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))
     .filter(file => {
-      return !file.startsWith(outDir + '/')
+      return !file.startsWith(outDirPrefix)
     })
     .map(file => ({
       file,
