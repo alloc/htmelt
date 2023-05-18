@@ -10,6 +10,7 @@ const cli = cac('htmelt')
 const commands: CLI['commands'] = {
   default: cli
     .command('')
+    .option('-o, --outDir', `[string] set the build directory`)
     .option('--watch', `[boolean]`)
     .option('--minify', `[boolean]`)
     .option('--critical', `[boolean]`),

@@ -53,7 +53,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   }
 
   const srcDir = path.resolve(userConfig.src ?? 'src')
-  const outDir = path.resolve(userConfig.build ?? 'build')
+  const outDir = path.resolve(flags.outDir || (userConfig.build ?? 'build'))
   const outDirPrefix = outDir + '/'
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))

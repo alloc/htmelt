@@ -4,6 +4,7 @@
 export interface Flags {
   watch?: boolean
   minify?: boolean
+  outDir?: string
   critical?: boolean
 
   /** Arguments without an associated flag. */
