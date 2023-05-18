@@ -98,7 +98,7 @@ export function buildEntryScripts(
   standaloneScripts: Set<string>,
   importedScripts: Set<string>,
   config: Config,
-  flags: { watch?: boolean; write?: boolean; minify?: boolean } = {}
+  flags: { watch?: boolean; minify?: boolean } = {}
 ) {
   const scripts = [...standaloneScripts, ...importedScripts]
   for (const srcPath of scripts) {
@@ -140,7 +140,7 @@ export function buildEntryScripts(
       outbase: config.src,
       outdir: config.build,
       metafile: true,
-      write: flags.write != false,
+      write: true,
       bundle: true,
       splitting: true,
       treeShaking: !flags.watch,
