@@ -284,5 +284,5 @@ function findLinkedPackages(root: string, linkedPackages = new Set<string>()) {
 
 function normalizePath(p: string) {
   p = path.normalize(p)
-  return p === '.' ? '' : p.replace(/\/$/, '')
+  return p === './' ? '' : p.replace(/\/$/, '')
 }
