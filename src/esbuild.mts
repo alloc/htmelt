@@ -7,6 +7,7 @@ import {
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { wrapPlugins } from 'esbuild-extra'
+import { readFileSync, writeFileSync } from 'fs'
 import { yellow } from 'kleur/colors'
 import * as path from 'path'
 import importGlobPlugin from './plugins/importGlob/index.mjs'
@@ -104,21 +105,25 @@ export function buildEntryScripts(
     console.log(yellow('⌁'), baseRelative(srcPath))
   }
 
-  const htmeltStubId = '/_htmelt-stub.js'
-  config.virtualFiles[htmeltStubId] = {
-    data: 'globalThis.htmelt = {export(){}}',
-  }
-
+  // Since we can't prevent a standalone script from sharing a module
+  // with an imported script (well, without duplicating code...), we
+  // need to prepend its output chunk with a stub `htmelt` object, which
+  // ensures a standalone script won't crash on `htmelt.export` calls.
   const standaloneScriptPlugin: esbuild.Plugin = {
     name: 'htmelt/standaloneScripts',
     setup(build) {
-      build.onTransform({ loaders: ['ts', 'tsx', 'js', 'jsx'] }, args => {
-        if (standaloneScripts.has(args.path)) {
-          // Since we can't prevent a standalone script from sharing a
-          // module with an imported script (well, without duplicating
-          // code...), we need to make sure that the standalone script
-          // doesn't crash on calls to `htmelt.export`
-          return { code: `import "${htmeltStubId}"; ` + args.code }
+      build.onEnd(({ metafile }) => {
+        for (const [outFile, output] of Object.entries(metafile!.outputs)) {
+          if (!output.entryPoint) continue
+
+          const entry = path.resolve(output.entryPoint)
+          if (!standaloneScripts.has(entry)) continue
+
+          let code = readFileSync(outFile, 'utf8')
+          if (!code.includes('htmelt.export')) continue
+
+          code = 'globalThis.htmelt = {export(){}}; ' + code
+          writeFileSync(outFile, code)
         }
       })
     },
