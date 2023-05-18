@@ -52,10 +52,9 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     )
   }
 
-  const srcDir = (userConfig.src ?? 'src').replace(/\/$/, '')
-  const outDir = (userConfig.build ?? 'build').replace(/\/$/, '')
-  const outDirPrefix =
-    outDir.replace(/^(\.\/)?/, srcDir[0] === '.' ? './' : '') + '/'
+  const srcDir = path.resolve(userConfig.src ?? 'src')
+  const outDir = path.resolve(userConfig.build ?? 'build')
+  const outDirPrefix = outDir + '/'
 
   const entries = (await promisify(glob)(srcDir + '/**/*.html'))
     .filter(file => {
@@ -172,7 +171,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     mode: nodeEnv,
     src: srcDir,
     build: outDir,
-    base: userConfig.base ?? outDir.replace(/^\/?/, '/').replace(/\/?$/, '/'),
+    base: userConfig.base ?? '/' + path.relative(process.cwd(), outDir) + '/',
     entries,
     plugins: [],
     bundles: undefined!,
