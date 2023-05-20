@@ -118,12 +118,12 @@ importers:
       '@htmelt/plugin': workspace:^0.3.0
       '@types/serialize-javascript': ^5.0.2
       meriyah: ^4.3.5
-      nebu: ^2.3.7
+      nebu: ^2.4.0
       serialize-javascript: ^6.0.1
     dependencies:
       '@htmelt/plugin': link:../plugin
       meriyah: 4.3.5
-      nebu: 2.3.8
+      nebu: 2.4.0
       serialize-javascript: 6.0.1
     devDependencies:
       '@alloc/fast-rimraf': 1.0.8
@@ -1163,6 +1163,7 @@ packages:
 
   /blueimp-md5/2.19.0:
     resolution: {integrity: sha512-DRQrD6gJyy8FbiE4s+bDoXS9hiW3Vbx5uCdwvcCf3zLHL+Iv7LtGHLpr+GZV8rHG8tK766FGYBwRbu8pELTt+w==}
+    dev: false
 
   /boolbase/1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -3284,6 +3285,16 @@ packages:
     engines: {node: '>= 7.6.0'}
     dependencies:
       '@alloc/is': 3.1.2
+      '@alloc/types': 2.3.0
+      eslint-visitor-keys: 3.4.0
+      magic-string: 0.24.1
+      meriyah: 4.3.5
+    dev: false
+
+  /nebu/2.4.0:
+    resolution: {integrity: sha512-FKWOc+b9uLocBzIiMg0zPiO+4oFtWslykywdESmjeavPWKfewLo5pdavAB2c1uPh+OIloB9A/pYl7d3CihXWEg==}
+    engines: {node: '>= 7.6.0'}
+    dependencies:
       '@alloc/types': 2.3.0
       eslint-visitor-keys: 3.4.0
       magic-string: 0.24.1
