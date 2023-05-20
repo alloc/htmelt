@@ -91,6 +91,7 @@ importers:
     specifiers:
       '@alloc/fast-rimraf': ^1.0.8
       '@rollup/pluginutils': ^5.0.2
+      '@types/node': ^20.2.1
       '@types/parse5': ^6.0.1
       cac: ^6.7.14
       esbuild: ^0.17.12
@@ -101,6 +102,7 @@ importers:
       type-fest: ^3.6.0
     dependencies:
       '@rollup/pluginutils': 5.0.2
+      '@types/node': 20.2.1
       '@types/parse5': 6.0.3
       cac: 6.7.14
       esbuild: 0.17.17
@@ -887,6 +889,10 @@ packages:
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
+
+  /@types/node/20.2.1:
+    resolution: {integrity: sha512-DqJociPbZP1lbZ5SQPk4oag6W7AyaGMO6gSfRwq3PWl4PXTwJpRQJhDq4W0kzrg3w6tJ1SwlvGZ5uKFHY13LIg==}
+    dev: false
 
   /@types/parse5/6.0.3:
     resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}

@@ -1,3 +1,4 @@
+/// <reference types="node" />
 export * from '@rollup/pluginutils'
 export { default as md5Hex } from 'md5-hex'
 export * from 'mitt'
