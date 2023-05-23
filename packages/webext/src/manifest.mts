@@ -23,6 +23,10 @@ export async function loadManifest(
       : webextConfig.manifest
   ) as WebExtension.AnyManifest
 
+  if (!isFirefoxTarget(target)) {
+    delete manifest.browser_specific_settings
+  }
+
   if (isManifestV3(manifest)) {
     // Remove permissions meant for other targets.
     if (manifest.permissions) {
