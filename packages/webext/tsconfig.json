@@ -1,5 +1,6 @@
 {
   "include": ["src", "packages.d.ts"],
+  "exclude": ["client"],
   "compilerOptions": {
     "declaration": true,
     "module": "esnext",

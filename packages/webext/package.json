@@ -10,8 +10,8 @@
   },
   "files": [
     "dist",
-    "index.d.ts",
-    "client.d.ts"
+    "client",
+    "index.d.ts"
   ],
   "dependencies": {
     "@htmelt/plugin": "workspace:^0.3.0",
