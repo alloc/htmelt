@@ -112,17 +112,30 @@ export function buildEntryScripts(
   const standaloneScriptPlugin: esbuild.Plugin = {
     name: 'htmelt/standaloneScripts',
     setup(build) {
+      if (!flags.watch || !standaloneScripts.size) {
+        return
+      }
+      let stubPath: string | undefined
       build.onEnd(({ metafile }) => {
-        for (const [outFile, output] of Object.entries(metafile!.outputs)) {
+        for (let [outFile, output] of Object.entries(metafile!.outputs)) {
           if (!output.entryPoint) continue
 
           const entry = path.resolve(output.entryPoint)
           if (!standaloneScripts.has(entry)) continue
 
-          let code = readFileSync(outFile, 'utf8')
-          if (!code.includes('htmelt.export')) continue
+          if (!stubPath) {
+            stubPath = path.join(config.build, 'htmelt-stub.js')
+            writeFileSync(stubPath, 'globalThis.htmelt = {export(){}};')
+          }
 
-          code = 'globalThis.htmelt = {export(){}}; ' + code
+          let stubImportId = path.relative(path.dirname(outFile), stubPath)
+          if (stubImportId[0] !== '.') {
+            stubImportId = './' + stubImportId
+          }
+
+          outFile = path.resolve(outFile)
+          let code = readFileSync(outFile, 'utf8')
+          code = `import "${stubImportId}"; ` + code
           writeFileSync(outFile, code)
         }
       })
