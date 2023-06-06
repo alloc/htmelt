@@ -10,7 +10,8 @@
   },
   "files": [
     "index.d.ts",
-    "dist"
+    "dist",
+    "types"
   ],
   "dependencies": {
     "@rollup/pluginutils": "^5.0.2",
