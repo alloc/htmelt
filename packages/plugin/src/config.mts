@@ -1,8 +1,8 @@
 import * as chokidar from 'chokidar'
 import * as esbuild from 'esbuild'
-import { Merge } from 'type-fest'
 import * as htmlMinifierTerser from '../types/html-minifier-terser'
 import * as lightningCss from '../types/lightningcss'
+import type { Merge } from '../types/type-fest'
 import type { Plugin, PluginInstance } from './index.mjs'
 
 export type UserConfig = {

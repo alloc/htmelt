@@ -24,7 +24,6 @@
     "parse5": "^6.0.1"
   },
   "devDependencies": {
-    "@alloc/fast-rimraf": "^1.0.8",
-    "type-fest": "^3.6.0"
+    "@alloc/fast-rimraf": "^1.0.8"
   }
 }
