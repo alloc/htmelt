@@ -146,7 +146,7 @@ export function buildEntryScripts(
     wrapPlugins({
       format: 'esm',
       charset: 'utf8',
-      sourcemap: flags.watch,
+      sourcemap: config.mode == 'development',
       minify: !flags.watch && flags.minify != false,
       ...config.esbuild,
       entryPoints: scripts,
