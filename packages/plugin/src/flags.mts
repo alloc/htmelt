@@ -2,6 +2,7 @@
  * Arguments passed in through the command line.
  */
 export interface Flags {
+  port?: number
   watch?: boolean
   outDir?: string
 

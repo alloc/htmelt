@@ -1,3 +1,5 @@
+import type { esbuild } from '@htmelt/plugin'
+
 export interface PreVal {
   file: string
   fs: {
@@ -18,4 +20,12 @@ export interface PreVal {
   process: {
     cwd(): string
   }
+  load: (
+    id: string,
+    options?: {
+      namespace?: string
+      pluginData?: any
+      kind?: esbuild.ImportKind
+    }
+  ) => Promise<string | Uint8Array | undefined>
 }

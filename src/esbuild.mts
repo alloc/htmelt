@@ -1,9 +1,9 @@
 import {
   Config,
+  fileToId,
+  getAttribute,
   ParentNode,
   ScriptReference,
-  baseRelative,
-  getAttribute,
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { wrapPlugins } from 'esbuild-extra'
@@ -100,9 +100,9 @@ export function buildEntryScripts(
   config: Config,
   flags: { watch?: boolean; minify?: boolean } = {}
 ) {
-  const scripts = [...standaloneScripts, ...importedScripts]
+  const scripts = new Set([...standaloneScripts, ...importedScripts])
   for (const srcPath of scripts) {
-    console.log(yellow('⌁'), baseRelative(srcPath))
+    console.log(yellow('⌁'), fileToId(srcPath))
   }
 
   // Since we can't prevent a standalone script from sharing a module
@@ -117,7 +117,8 @@ export function buildEntryScripts(
       }
       let stubPath: string | undefined
       build.onEnd(({ metafile }) => {
-        for (let [outFile, output] of Object.entries(metafile!.outputs)) {
+        if (!metafile) return
+        for (let [outFile, output] of Object.entries(metafile.outputs)) {
           if (!output.entryPoint) continue
 
           const entry = path.resolve(output.entryPoint)
@@ -149,7 +150,7 @@ export function buildEntryScripts(
       sourcemap: config.mode == 'development',
       minify: !flags.watch && flags.minify != false,
       ...config.esbuild,
-      entryPoints: scripts,
+      entryPoints: [...scripts],
       outbase: config.src,
       outdir: config.build,
       metafile: true,

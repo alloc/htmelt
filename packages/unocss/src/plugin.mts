@@ -1,18 +1,20 @@
 import {
-  baseRelative,
   createElement,
+  fileToId,
   findElement,
   getTagName,
   md5Hex,
+  parseNamespace,
   Plugin,
   prepend,
   setTextContent,
 } from '@htmelt/plugin'
 import type { UserConfig } from '@unocss/core'
+import { existsSync } from 'fs'
 import path from 'path'
 import { createContext } from './context.mjs'
 
-const VIRTUAL_PREFIX = '/@unocss/'
+const VIRTUAL_PREFIX = '@htmelt-unocss/'
 // const SCOPE_IMPORT_RE = / from (['"])(@unocss\/scope)\1/
 
 export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
@@ -24,9 +26,19 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
     if (config.watcher) {
       cache = {}
       config.watcher.on('change', file => {
-        file = path.resolve(file)
+        if (!parseNamespace(file)) {
+          file = path.resolve(file)
+        }
         delete cache![file]
       })
+    }
+
+    config.alias['unocss/preflight.css'] = {
+      loader: 'css',
+      async request() {
+        const { css } = await uno.generate('')
+        return { data: css }
+      },
     }
 
     config.esbuild.plugins.push({
@@ -37,37 +49,84 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
             return null
           }
 
-          const id = args.path
-          const uri = baseRelative(id)
+          const file = args.path
+          const id = fileToId(file)
 
-          let css = cache?.[id]
+          console.log('[unocss:esbuild] transform', file)
+
+          let css = cache?.[file]
           if (css === undefined) {
             const unoResult = await uno.generate(args.code, {
-              id,
+              id: file,
               preflights: false,
             })
             css = unoResult.matched.size > 0 ? unoResult.css : null
-            if (cache) {
-              cache[id] = css
-            }
           }
           if (css === null) {
-            moduleMap.delete(uri)
+            if (cache) {
+              cache[file] = null
+            }
+            moduleMap.delete(id)
             return null
           }
 
-          const hash = md5Hex(id)
-          const cssPath = `${VIRTUAL_PREFIX}${hash}.css`
+          // Prepend a comment to the CSS for debugging purposes.
+          css = `/* unocss ${path.relative(process.cwd(), file)} */\n` + css
 
-          config.virtualFiles[cssPath] = {
-            data: `\n/* unocss ${path.relative(process.cwd(), id)} */\n${css}`,
+          let code: string | undefined
+          let cssPath = args.path.replace(/\.([jt]sx?)$/, '.css')
+          let watchFiles: string[] | undefined
+
+          console.log('[unocss-esbuild] updating virtual file', cssPath)
+
+          // If a CSS file exists for this JS module, simply append the generated CSS to it instead
+          // of creating a separate virtual file. Before loading the CSS file, we should unset any
+          // previous virtual file from this plugin.
+          if (existsSync(cssPath)) {
+            config.unsetVirtualFile(cssPath)
+            const promise = build
+              .load({
+                path: cssPath,
+                suffix: '?raw',
+              })
+              .then(loadResult => ({
+                data: String(loadResult.contents).replace(/\n*$/, '\n\n') + css,
+              }))
+
+            watchFiles = [cssPath]
+            config.setVirtualFile(cssPath, {
+              loader: 'css',
+              promise,
+            })
+          } else {
+            cssPath = `${VIRTUAL_PREFIX}${md5Hex(file)}.css`
+            config.alias[cssPath] = {
+              loader: 'css',
+              current: { data: css },
+            }
+            code = `import "${cssPath}";${args.code}`
+            cssPath = 'virtual:' + cssPath
+          }
+
+          if (config.watcher && moduleMap.has(id)) {
+            config.watcher.emit('change', cssPath)
+          }
+          if (cache) {
+            cache[file] = css
           }
 
           // TODO: use this for HMR updates
-          moduleMap.set(uri, [md5Hex(css), cssPath])
+          const cssHash = md5Hex(css)
+          moduleMap.set(id, [cssHash, cssPath])
+
+          if (code == null) {
+            return {
+              watchFiles,
+            }
+          }
 
           return {
-            code: `import "${cssPath}";${args.code}`,
+            code,
             map: null,
           }
         })
@@ -83,7 +142,7 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
         if (!headTag) {
           throw Error('No <head> tag found in document: ' + file)
         }
-        if (!bundle.inputs.some(uri => moduleMap.has(uri))) {
+        if (!bundle.inputs.some(id => moduleMap.has(id))) {
           return // no tokens were matched
         }
         const { css: preflights } = await uno.generate('')

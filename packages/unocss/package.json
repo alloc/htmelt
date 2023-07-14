@@ -9,11 +9,17 @@
     "prepublishOnly": "tsup src/index.mts --format esm --dts --clean"
   },
   "files": [
-    "dist"
+    "dist",
+    "env.d.ts"
   ],
   "dependencies": {
     "@htmelt/plugin": "workspace:^0.3.0",
-    "@unocss/config": "^0.50.8",
+    "@unocss/config": "^0.50.8"
+  },
+  "peerDependencies": {
+    "@unocss/core": "*"
+  },
+  "devDependencies": {
     "@unocss/core": "^0.50.8"
   }
 }

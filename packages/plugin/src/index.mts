@@ -1,5 +1,7 @@
 /// <reference types="node" />
 export * from '@rollup/pluginutils'
+export * as esbuild from 'esbuild'
+export * from 'esbuild-extra'
 export { default as md5Hex } from 'md5-hex'
 export * from 'mitt'
 export { default as mitt } from 'mitt'

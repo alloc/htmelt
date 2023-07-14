@@ -1,10 +1,12 @@
 import {
   BundleFlags,
   Config,
+  fileToId,
+  md5Hex,
+  parseNamespace,
   Plugin,
   ServePlugin,
-  baseRelative,
-  md5Hex,
+  uriToId,
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
@@ -28,6 +30,8 @@ import {
   findRelativeScripts,
 } from './esbuild.mjs'
 import { buildHTML, parseHTML } from './html.mjs'
+import { loadVirtualFile } from './plugins/virtualFiles.mjs'
+import { updateRelatedWatcher } from './relatedWatcher.mjs'
 import {
   createDir,
   lowercaseKeys,
@@ -43,7 +47,7 @@ type PartialBundle = {
   entries?: Set<string>
   context?: esbuild.BuildContext<{ metafile: true }>
   metafile?: esbuild.Metafile
-  /** Same as `metafile.inputs` but mapped with `baseRelative` */
+  /** Same as `metafile.inputs` but mapped with `fileToId` */
   inputs?: string[]
 }
 
@@ -97,6 +101,7 @@ export async function bundle(config: Config, flags: BundleFlags) {
       const { metafile } = await context.rebuild()
       bundle.metafile = metafile
       bundle.inputs = toBundleInputs(metafile)
+      return bundle as Plugin.Bundle
     }
 
     return {
@@ -141,8 +146,8 @@ export async function bundle(config: Config, flags: BundleFlags) {
               file,
               bundle: bundle as Plugin.Bundle,
             }
-            const uri = baseRelative(file)
-            documents[uri] = document
+            const id = fileToId(file)
+            documents[id] = document
             bundle.importers.push(document)
           } else if (/\.[mc]?[tj]sx?$/.test(file)) {
             bundle.scripts.add(file)
@@ -167,6 +172,10 @@ export async function bundle(config: Config, flags: BundleFlags) {
         const bundlesPromise = Promise.all(
           Array.from(bundles, async ([bundleId, bundle]) => {
             await (bundlePromises[bundleId] = buildScripts(bundle))
+            if (config.relatedWatcher) {
+              updateRelatedWatcher(config.relatedWatcher, bundle.metafile!)
+            }
+
             return [bundleId, bundle as Plugin.Bundle] as const
           })
         ).then(Object.fromEntries<Plugin.Bundle>)
@@ -184,22 +193,26 @@ export async function bundle(config: Config, flags: BundleFlags) {
             )
           ),
           ...isolatedScripts.map(srcPath => {
-            console.log(yellow('⌁'), baseRelative(srcPath))
+            console.log(yellow('⌁'), fileToId(srcPath))
             if (flags.watch) {
               return compileSeparateEntry(srcPath, config, {
                 metafile: true,
                 watch: true,
               }).then(({ outputFiles, context, metafile }) => {
+                const inputs = toBundleInputs(metafile, config.watcher)
                 const outPath = config.getBuildPath(srcPath)
+
                 scripts[srcPath] = {
                   srcPath,
                   outPath,
                   context,
                   metafile,
-                  inputs: toBundleInputs(metafile, config.watcher),
+                  inputs,
                 }
+
                 createDir(outPath)
                 fs.writeFileSync(outPath, outputFiles[0].text)
+                updateRelatedWatcher(config.relatedWatcher!, metafile)
               })
             }
             return compileSeparateEntry(srcPath, config).then(code => {
@@ -232,6 +245,8 @@ export async function bundle(config: Config, flags: BundleFlags) {
           : path.join(process.cwd(), uri)
 
         const oldScripts = document.scripts
+        const oldMetafile = document.bundle.metafile
+
         Object.assign(document, loadDocument(file))
 
         await Promise.all([
@@ -240,7 +255,13 @@ export async function bundle(config: Config, flags: BundleFlags) {
             oldScripts.some(
               (script, i) => script.srcPath !== document.scripts[i].srcPath
             )) &&
-            buildScripts(document.bundle),
+            buildScripts(document.bundle).then(bundle => {
+              updateRelatedWatcher(
+                config.relatedWatcher!,
+                bundle.metafile,
+                oldMetafile
+              )
+            }),
         ])
       },
       async rebuildStyles() {
@@ -280,6 +301,16 @@ export async function bundle(config: Config, flags: BundleFlags) {
     const changedModules = new Set<string>()
     const changedPages = new Set<string>()
 
+    // Trigger a rebuild when a related file is changed.
+    config.relatedWatcher?.onChange(relatedFile => {
+      if (parseNamespace(relatedFile)) {
+        watcher.emit('change', relatedFile)
+      } else {
+        console.log('Touching file:', relatedFile)
+        fs.utimesSync(relatedFile, new Date(), new Date())
+      }
+    })
+
     // TODO: track failed module resolutions and only rebuild if a file
     // is added that matches one of them.
     /*watcher.on('add', async file => {
@@ -287,36 +318,48 @@ export async function bundle(config: Config, flags: BundleFlags) {
       console.log(cyan('+'), file)
     })*/
 
+    // This listener supports absolute file paths, files relative to the working directory, and
+    // namespaced IDs. So if a virtual file is changed, you can call…
+    //     config.watcher.add("virtual:some/generated/module.js")
+    // …to reload the bundle or send HMR updates.
     watcher.on('change', file => {
-      file = baseRelative(path.resolve(file))
-      if (file.endsWith('.html')) {
-        console.log(cyan('↺'), file)
-        changedPages.add(file)
+      const namespace = parseNamespace(file)
+      const id = namespace ? file : fileToId(path.resolve(file))
+
+      if (id.endsWith('.html')) {
+        console.log(cyan('↺'), id)
+        changedPages.add(id)
         requestRebuild()
       } else {
         // Any files used by scripts added in `config.scripts` will
         // trigger a full reload when changed.
         let isFullReload = false
         for (const script of Object.values(build.scripts)) {
-          if (script.inputs.includes(file)) {
+          if (script.inputs.includes(id)) {
             changedScripts.add(script)
             isFullReload = true
           }
         }
         if (isFullReload) {
           requestRebuild()
-        } else if (file.endsWith('.css') || file in config.modules!) {
-          changedModules.add(file)
+        } else if (id.endsWith('.css') || id in config.modules!) {
+          changedModules.add(id)
           requestRebuild()
         }
       }
     })
 
     watcher.on('unlink', file => {
+      const namespace = parseNamespace(file)
+      config.relatedWatcher?.forgetRelatedFile(
+        namespace ? file : path.resolve(file)
+      )
+
       // Absolute files are typically not added to the build directory.
       if (path.isAbsolute(file)) {
         return
       }
+
       const outPath = config.getBuildPath(file).replace(/\.[jt]sx?$/, '.js')
       try {
         fs.rmSync(outPath)
@@ -336,7 +379,7 @@ export async function bundle(config: Config, flags: BundleFlags) {
     }, 200)
 
     const rebuild = async () => {
-      console.clear()
+      // console.clear()
 
       let isFullReload = changedPages.size > 0 || changedScripts.size > 0
       let stylesChanged = false
@@ -357,6 +400,10 @@ export async function bundle(config: Config, flags: BundleFlags) {
         accept: for (let file of changedModules) {
           console.log(cyan('↺'), file)
 
+          if (file.endsWith('.css')) {
+            stylesChanged = true
+          }
+
           if (fullReloadFiles.has(file)) {
             isFullReload = true
             break
@@ -368,13 +415,10 @@ export async function bundle(config: Config, flags: BundleFlags) {
               if (!files) {
                 acceptedFiles.set(hmr, (files = []))
               }
+              console.log('HMR accepted file:', file)
               files.push(file)
               continue accept
             }
-          }
-
-          if (file.endsWith('.css')) {
-            stylesChanged = true
           }
 
           isFullReload = true
@@ -418,9 +462,9 @@ export async function bundle(config: Config, flags: BundleFlags) {
         }),
         ...htmlRebuildPromises,
         ...scriptRebuildPromises,
-        // Rebuild all styles if a .css file is changed and no .html
-        // files were also changed.
-        !changedPages.size &&
+        // Rebuild all styles if a .css file is changed at the same time that a full reload was
+        // triggered, since the .css file may be imported by a page/script that changed.
+        isFullReload &&
           stylesChanged &&
           build.rebuildStyles().catch(error => {
             errors.push(error)
@@ -473,6 +517,78 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     `^/(${[config.build, config.assets].join('|')})/`
   )
 
+  const loadFile = async (uri: string, request: Plugin.Request) => {
+    let filePath: string | undefined
+    let file: Plugin.VirtualFileData | null = null
+
+    const id = uriToId(uri)
+    const namespace = parseNamespace(id)
+    const isFileRequest = uri.startsWith('/@fs/')
+
+    if (isFileRequest) {
+      filePath = uri.slice(4)
+    } else if (!namespace) {
+      filePath = path.join(process.cwd(), uri)
+    }
+
+    let virtualFile = config.virtualFiles[uri]
+    if (!virtualFile) {
+      if (filePath) {
+        virtualFile = config.virtualFiles[filePath]
+      } else if (namespace) {
+        // Namespaced IDs can be aliased to virtual files.
+        const rawId = id.slice(namespace.length + 1)
+        const alias = config.alias[rawId]
+        if (typeof alias !== 'string') {
+          virtualFile = alias
+        }
+      }
+    }
+
+    if (virtualFile) {
+      file = await loadVirtualFile(virtualFile, uri, config, request)
+      if (file) {
+        if (file.watchFiles) {
+        }
+      }
+    }
+
+    // If no virtual file exists, check the local filesystem.
+    if (!file && filePath) {
+      let isAllowed = false
+      if (isFileRequest) {
+        for (const dir of config.fsAllowedDirs) {
+          if (!path.relative(dir, filePath).startsWith('..')) {
+            isAllowed = true
+            break
+          }
+        }
+      } else {
+        isAllowed = fsAllowRE.test(uri)
+      }
+      if (isAllowed) {
+        try {
+          file = {
+            path: filePath,
+            data: fs.readFileSync(filePath),
+          }
+        } catch {}
+      }
+    }
+
+    if (file && uri.endsWith('.map')) {
+      const map = JSON.parse(file.data.toString('utf8'))
+      resolveDevMapSources(
+        map,
+        process.cwd(),
+        filePath ? path.dirname(filePath) : process.cwd()
+      )
+      file.data = JSON.stringify(map)
+    }
+
+    return file
+  }
+
   const server = createServer({ cert, key }, async (req, response) => {
     const request = Object.assign(req, parseURL(req.url!)) as Plugin.Request
     request.searchParams = new URLSearchParams(request.search || '')
@@ -485,51 +601,19 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     }
 
     // If no plugin handled the request, check the virtual filesystem.
+    let uri = request.pathname
     if (!file) {
-      let uri = request.pathname
-      let filePath: string
-
-      let virtualFile = config.virtualFiles[uri]
-      if (virtualFile) {
-        if (typeof virtualFile == 'function') {
-          virtualFile = virtualFile(request)
+      file = await loadFile(uri, request)
+      if (!file && !uri.startsWith('/@fs/')) {
+        uri = path.posix.join('/', config.build, uri)
+        file = await loadFile(uri, request)
+        if (!file && !uri.endsWith('/')) {
+          file = await loadFile(uri + '.html', request)
         }
-        file = await virtualFile
-      }
-
-      const isFileRequest = uri.startsWith('/@fs/')
-      if (isFileRequest) {
-        filePath = uri.slice(4)
-      } else {
-        filePath = path.join(process.cwd(), uri)
-      }
-
-      // If no virtual file exists, check the local filesystem.
-      if (!file) {
-        let isAllowed = false
-        if (isFileRequest) {
-          for (const dir of config.fsAllowedDirs) {
-            if (!path.relative(dir, filePath).startsWith('..')) {
-              isAllowed = true
-              break
-            }
-          }
-        } else {
-          isAllowed = fsAllowRE.test(uri)
+        if (!file) {
+          uri = path.posix.join(uri, 'index.html')
+          file = await loadFile(uri, request)
         }
-        if (isAllowed) {
-          try {
-            file = {
-              data: fs.readFileSync(filePath),
-            }
-          } catch {}
-        }
-      }
-
-      if (file && uri.endsWith('.map')) {
-        const map = JSON.parse(file.data.toString('utf8'))
-        resolveDevMapSources(map, process.cwd(), path.dirname(filePath))
-        file.data = JSON.stringify(map)
       }
     }
 
@@ -612,8 +696,11 @@ function installWebSocketServer(
     }
     evaluate(expr: string) {
       const path = `/${md5Hex(expr)}.js`
-      config.virtualFiles[path] ||= {
-        data: `export default () => ${expr}`,
+      if (!config.virtualFiles[path]) {
+        config.setVirtualFile(path, {
+          loader: 'js',
+          current: { data: `export default () => ${expr}` },
+        })
       }
       return evaluate(this, path)
     }
@@ -623,7 +710,7 @@ function installWebSocketServer(
       const mtime = fs.statSync(moduleUrl).mtimeMs
 
       const path = `/${md5Hex(moduleUrl.href)}.${mtime}.js`
-      if (config.virtualFiles[path] == null) {
+      if (!config.virtualFiles[path]) {
         let compiled = compiledModules.get(moduleUrl.href)
         if (compiled?.mtime != mtime) {
           const entry = decodeURIComponent(moduleUrl.pathname)
@@ -639,7 +726,10 @@ function installWebSocketServer(
             })
           )
         }
-        config.virtualFiles[path] = compiled
+        config.setVirtualFile(path, {
+          loader: 'js',
+          current: compiled,
+        })
       }
 
       let parallelCount = runningModules.get(path) || 0
@@ -650,7 +740,7 @@ function installWebSocketServer(
       parallelCount = runningModules.get(path)!
       runningModules.set(path, --parallelCount)
       if (parallelCount == 0) {
-        delete config.virtualFiles[path]
+        config.unsetVirtualFile(path)
       }
 
       return result
@@ -731,6 +821,6 @@ export function toBundleInputs(
       return file
     }
     watcher?.add(file)
-    return baseRelative(file)
+    return fileToId(file)
   })
 }

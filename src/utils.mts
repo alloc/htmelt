@@ -72,7 +72,7 @@ export function resolveDevMapSources(
 
   // This assumes each source is a relative path to the source file.
   map.sources = map.sources.map((source: string) => {
-    if (isOutOfRoot(source)) {
+    if (!source.includes(':') && isOutOfRoot(source)) {
       return '/@fs' + path.resolve(resolveDir, source)
     }
     return source
@@ -89,4 +89,15 @@ export function setsEqual<T>(a: Set<T>, b: Set<T>) {
     }
   }
   return true
+}
+
+/**
+ * Remove `?` query string suffix from a string.
+ */
+export function removePathSuffix(str: string) {
+  const suffixStart = str.indexOf('?')
+  if (suffixStart === -1) {
+    return str
+  }
+  return str.slice(0, suffixStart)
 }

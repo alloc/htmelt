@@ -1,6 +1,7 @@
 import { Plugin } from '@htmelt/plugin'
 import path from 'path'
 import { toBundleInputs } from '../bundle.mjs'
+import { updateRelatedWatcher } from '../relatedWatcher.mjs'
 
 /**
  * By default, any scripts in your HTML files are rewritten to use the
@@ -25,9 +26,14 @@ export const liveBundlesPlugin: Plugin = config => {
       .rebuild()
       .then(
         ({ metafile }) => {
-          dirtyBundles.delete(bundle)
+          updateRelatedWatcher(
+            config.relatedWatcher!,
+            metafile,
+            bundle.metafile
+          )
           bundle.metafile = metafile
           bundle.inputs = toBundleInputs(metafile)
+          dirtyBundles.delete(bundle)
         },
         error => {
           console.error(

@@ -22,20 +22,51 @@ export default (): Plugin => config => {
           module: true,
         })
 
-        const resolveDir = path.dirname(args.path)
+        const importer = args.path
+        const resolveDir = path.dirname(importer)
+        const watchFiles: string[] = []
+        const watchDirs: string[] = []
+
         const context: PreVal = {
           file: args.path,
           fs: {
             readFile(file) {
+              file = path.resolve(resolveDir, file)
+              watchFiles.push(file)
               try {
-                return fs.readFileSync(path.resolve(resolveDir, file), 'utf8')
+                return fs.readFileSync(file, 'utf8')
               } catch {}
             },
             listFiles(dir) {
+              dir = path.resolve(resolveDir, dir)
+              watchDirs.push(dir)
               try {
-                return fs.readdirSync(path.resolve(resolveDir, dir))
+                return fs.readdirSync(dir)
               } catch {}
             },
+          },
+          async load(id, options) {
+            const resolved = await build.resolve(id, {
+              kind: 'entry-point',
+              ...options,
+              importer,
+              resolveDir,
+            })
+
+            if (resolved.namespace === 'file') {
+              watchFiles.push(resolved.path)
+            }
+
+            const loadResult = await build.load(resolved)
+
+            if (loadResult.watchFiles) {
+              watchFiles.push(...loadResult.watchFiles)
+            }
+            if (loadResult.watchDirs) {
+              watchDirs.push(...loadResult.watchDirs)
+            }
+
+            return loadResult.contents as any
           },
           path,
           process,
@@ -94,6 +125,8 @@ export default (): Plugin => config => {
         return {
           code: result.js,
           map: result.map,
+          watchFiles,
+          watchDirs,
         }
       })
     },

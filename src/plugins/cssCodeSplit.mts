@@ -1,4 +1,4 @@
-import { Config, Plugin, baseRelative, md5Hex } from '@htmelt/plugin'
+import { Config, fileToId, idToUri, md5Hex, Plugin } from '@htmelt/plugin'
 import { buildCSSFile } from '../css.mjs'
 
 /**
@@ -13,23 +13,26 @@ export const cssCodeSplit: Plugin = (config, flags) => {
       build.onLoad({ filter: /\.css$/ }, async args => {
         const css = await buildCSSFile(args.path, config, flags)
         return {
+          loader: 'css',
+          contents: css.code,
+        }
+      })
+
+      build.onTransform({ filter: /\.css$/ }, args => {
+        if (new URLSearchParams(args.suffix).has('raw')) {
+          return null
+        }
+        return {
           loader: 'js',
-          contents: getCSSInjectionScript(
-            css.code.toString('utf8'),
+          code: getCSSInjectionScript(
+            args.code,
             args.path,
+            args.namespace,
             config,
             flags
           ),
         }
       })
-
-      build.onTransform(
-        { filter: /\.css$/, namespace: 'virtual' },
-        async args => ({
-          loader: 'js',
-          code: getCSSInjectionScript(args.code, args.path, config, flags),
-        })
-      )
     },
   })
 }
@@ -37,10 +40,12 @@ export const cssCodeSplit: Plugin = (config, flags) => {
 function getCSSInjectionScript(
   code: string,
   file: string,
+  namespace: string,
   config: Config,
   flags: { watch?: boolean; minify?: boolean }
 ) {
-  config.registerCssEntry?.(file, code)
+  const id = fileToId(file, namespace)
+  config.registerCssEntry?.(id, code, 'js')
 
   const jsArgs = [
     `"${md5Hex(file).slice(0, 12)}"`,
@@ -49,10 +54,11 @@ function getCSSInjectionScript(
 
   let jsModule: string
   if (flags.watch) {
-    const url = new URL(
-      baseRelative(config.getBuildPath(file)),
-      config.server.url
+    const id = fileToId(
+      namespace === 'file' ? config.getBuildPath(file) : file,
+      namespace
     )
+    const url = new URL(idToUri(id), config.server.url)
     jsModule = `(${injectStyleTag_DEV})(${jsArgs}, "${url.href}")`
   } else {
     jsModule = `(${injectStyleTag})(${jsArgs})`

@@ -1,13 +1,13 @@
 import {
-  Config,
-  ParentNode,
-  Plugin,
   appendChild,
-  baseRelative,
+  Config,
   createElement,
+  fileToId,
   findElement,
+  ParentNode,
   parse,
   parseFragment,
+  Plugin,
   serialize,
 } from '@htmelt/plugin'
 import Critters from 'critters'
@@ -44,7 +44,7 @@ export async function buildHTML(
   config: Config,
   flags: { watch?: boolean; critical?: boolean }
 ) {
-  console.log(yellow('⌁'), baseRelative(document.file))
+  console.log(yellow('⌁'), fileToId(document.file))
   const outFile = config.getBuildPath(document.file)
   try {
     await buildRelativeStyles(document.styles, config, flags)
@@ -54,7 +54,7 @@ export async function buildHTML(
   }
 
   for (const ref of [...document.scripts, ...document.styles]) {
-    let outPath = baseRelative(ref.outPath)
+    let outPath = fileToId(ref.outPath)
     if (!flags.watch) {
       outPath = outPath.replace('/' + config.build + '/', config.base)
     }

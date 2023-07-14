@@ -1,7 +1,7 @@
-import { Module, Plugin, baseRelative } from '@htmelt/plugin'
+import { fileToId, Module, Plugin } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { ESTree, parse } from 'meriyah'
-import { Node as NebuNode, Plugin as NebuPlugin, nebu } from 'nebu'
+import { nebu, Node as NebuNode, Plugin as NebuPlugin } from 'nebu'
 import { dirname } from 'path'
 import { compileSeparateEntry } from '../esbuild.mjs'
 import { appendInlineSourceMap } from '../sourceMaps.mjs'
@@ -11,6 +11,11 @@ import metaUrlPlugin from './importMetaUrl.mjs'
 
 export const devModulesPlugin: Plugin = async config => {
   const modules = config.modules!
+
+  config.watcher?.on('unlink', file => {
+    const id = fileToId(file)
+    delete modules[id]
+  })
 
   const esbuildDevModules: esbuild.Plugin = {
     name: 'dev-modules',
@@ -22,7 +27,10 @@ export const devModulesPlugin: Plugin = async config => {
           module: true,
         })
 
-        const resolutions = new Map<ESTree.ImportDeclaration, string>()
+        const resolutions = new Map<
+          ESTree.ImportDeclaration,
+          esbuild.ResolveResult
+        >()
 
         await Promise.all(
           program.body.map(async node => {
@@ -35,7 +43,7 @@ export const devModulesPlugin: Plugin = async config => {
               importer: args.path,
               resolveDir: dirname(args.path),
             })
-            resolutions.set(node, resolved.path)
+            resolutions.set(node, resolved)
           })
         )
 
@@ -43,12 +51,12 @@ export const devModulesPlugin: Plugin = async config => {
           Program(program) {
             for (const node of program.body) {
               if (node.isImportDeclaration()) {
-                let resolvedId = resolutions.get(node.n)
-                if (resolvedId === undefined) {
+                let resolved = resolutions.get(node.n)
+                if (resolved === undefined) {
                   continue
                 }
 
-                resolvedId = baseRelative(resolvedId)
+                const resolvedId = fileToId(resolved.path, resolved.namespace)
                 if (!(resolvedId in modules)) {
                   continue
                 }
@@ -146,7 +154,7 @@ export const devModulesPlugin: Plugin = async config => {
         module: Module
         resolutions: Map<
           ESTree.ExportAllDeclaration | ESTree.ExportNamedDeclaration,
-          string
+          esbuild.ResolveResult
         >
       }
 
@@ -159,8 +167,8 @@ export const devModulesPlugin: Plugin = async config => {
               module.imports.add(node.source.value as string)
             } else if (node.isExportNamedDeclaration()) {
               if (node.source) {
-                const resolvedId = resolutions.get(node.n)
-                if (!resolvedId) {
+                const resolved = resolutions.get(node.n)
+                if (!resolved) {
                   continue
                 }
                 const aliases = node.specifiers.map(specifier => [
@@ -168,7 +176,7 @@ export const devModulesPlugin: Plugin = async config => {
                   specifier.local.name,
                 ])
                 exports.push({
-                  from: baseRelative(resolvedId),
+                  from: fileToId(resolved.path, resolved.namespace),
                   aliases: Object.fromEntries(aliases),
                 })
                 continue
@@ -206,17 +214,13 @@ export const devModulesPlugin: Plugin = async config => {
               node.declaration.before(`__default = `)
               exports.push(['default', '__default'])
             } else if (node.isExportAllDeclaration()) {
-              const resolvedId = resolutions.get(node.n)
-              if (resolvedId) {
+              const resolved = resolutions.get(node.n)
+              if (resolved) {
                 exports.push({
-                  from: baseRelative(resolvedId),
+                  from: fileToId(resolved.path, resolved.namespace),
                 })
               }
             }
-          }
-
-          if (exports.length === 0) {
-            return
           }
 
           program.push(
@@ -229,7 +233,7 @@ export const devModulesPlugin: Plugin = async config => {
       }
 
       build.onTransform({ loaders: ['js', 'jsx'] }, async args => {
-        const id = baseRelative(args.initialPath || args.path)
+        const id = fileToId(args.initialPath || args.path, args.namespace)
 
         const program = parse(args.code, {
           next: true,
@@ -240,7 +244,7 @@ export const devModulesPlugin: Plugin = async config => {
 
         const resolutions = new Map<
           ESTree.ExportAllDeclaration | ESTree.ExportNamedDeclaration,
-          string
+          esbuild.ResolveResult
         >()
 
         await Promise.all(
@@ -258,7 +262,7 @@ export const devModulesPlugin: Plugin = async config => {
               importer: args.path,
               resolveDir: dirname(args.path),
             })
-            resolutions.set(node, resolved.path)
+            resolutions.set(node, resolved)
           })
         )
 

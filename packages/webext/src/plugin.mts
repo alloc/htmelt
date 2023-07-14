@@ -59,19 +59,12 @@ export default (options: WebExtension.Options): Plugin =>
     // Firefox doesn't need the webextension-polyfill, so let's ensure
     // it can be dropped from the bundle.
     if (target.platform !== 'chromium') {
-      config.esbuild.plugins.push({
-        name: 'htmelt-webext:polyfill',
-        setup(build) {
-          const namespace = 'webextension-polyfill'
-          build.onResolve({ filter: /^webextension-polyfill$/ }, args => ({
-            path: args.path,
-            namespace,
-          }))
-          build.onLoad({ filter: /.*/, namespace }, () => ({
-            contents: 'export default globalThis.browser',
-          }))
+      config.alias['webextension-polyfill'] = {
+        loader: 'js',
+        current: {
+          data: 'export default globalThis.browser',
         },
-      })
+      }
     }
 
     const events: InternalEvents = {
@@ -209,6 +202,12 @@ async function developExtension(
     params.chromiumBinary = replaceHomeDir(runOptions.binary)
     params.chromiumProfile = replaceHomeDir(runOptions.profile)
     params.args = runOptions.args
+
+    // Delete the log files to avoid filling up the disk.
+    if (params.chromiumProfile && fs.existsSync(params.chromiumProfile)) {
+      tryUnlinkSync(path.join(params.chromiumProfile, 'chrome-out.log'))
+      tryUnlinkSync(path.join(params.chromiumProfile, 'chrome-err.log'))
+    }
   } else if (target.platform == 'firefox-desktop') {
     params.firefox = replaceHomeDir(runOptions.binary || 'firefox')
     params.firefoxProfile = replaceHomeDir(runOptions.profile)
@@ -314,8 +313,9 @@ async function refreshOnRebuild(
     events.reload.push(async () => {
       const extOrigin = extProtocol + '//' + uuid
       const pages = (await chromeRemote.List({ port })).filter(
-        tab => tab.type == 'page'
+        tab => tab.type == 'page' && !tab.url.startsWith('devtools://')
       )
+      console.log('pages:', pages)
       if (
         pages.length > 0 &&
         pages.every(tab => tab.url.startsWith(extOrigin))
@@ -340,11 +340,7 @@ async function refreshOnRebuild(
     }
 
     console.log(cyan('↺'), extOrigin)
-
-    // Chromium reloads automatically, and we can't stop it.
-    if (!isChromium) {
-      await runner.reloadAllExtensions()
-    }
+    await runner.reloadAllExtensions()
 
     const newTabPage = manifest.chrome_url_overrides?.newtab
     const newTabUrl = newTabPage
@@ -451,15 +447,7 @@ async function openTabs(
         targetId = firstTab.id
         needsNavigate = true
       } else {
-        let params: { url: string } | undefined
-        if (isChromium) {
-          params = { url }
-        } else {
-          // Firefox doesn't support creating a new tab with a specific
-          // URL => https://bugzilla.mozilla.org/show_bug.cgi?id=1817258
-          needsNavigate = true
-        }
-        targetId = (await browser.send('Target.createTarget', params)).targetId
+        targetId = (await browser.send('Target.createTarget', { url })).targetId
       }
 
       target = await chromeRemote({
@@ -526,4 +514,14 @@ async function retryForever<T>(task: () => Promise<T>) {
 
 function writeManifest(manifest: WebExtension.Manifest) {
   fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2))
+}
+
+function tryUnlinkSync(file: string) {
+  try {
+    fs.unlinkSync(file)
+  } catch (err: any) {
+    if (err.code !== 'ENOENT') {
+      throw err
+    }
+  }
 }

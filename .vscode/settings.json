@@ -3,5 +3,6 @@
     "source.organizeImports": true
   },
   "editor.wordWrapColumn": 100,
-  "typescript.suggest.autoImports": true
+  "typescript.suggest.autoImports": true,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

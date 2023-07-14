@@ -101,11 +101,16 @@ export namespace Plugin {
     mtime?: number
     headers?: Record<string, number | string | readonly string[]>
     data: string | Buffer
+    watchFiles?: string[]
+    watchDirs?: string[]
   }
 
-  export type VirtualFile =
-    | ((request: Request) => Promisable<VirtualFileData | null>)
-    | Promisable<VirtualFileData | null>
+  export type VirtualFile = {
+    loader: 'js' | 'css' | 'file'
+    request?: (request: Request) => Promisable<VirtualFileData | null>
+    promise?: Promise<VirtualFileData | null>
+    current?: VirtualFileData
+  }
 
   export interface Document extends Entry {
     documentElement: ParentNode
@@ -128,7 +133,7 @@ export namespace Plugin {
     importers: Document[]
     context: esbuild.BuildContext<{ metafile: true }>
     metafile: esbuild.Metafile
-    /** Same as `metafile.inputs` but mapped with `baseRelative` */
+    /** Same as `metafile.inputs` but mapped with `fileToId` */
     inputs: string[]
   }
 
@@ -140,7 +145,7 @@ export namespace Plugin {
     outPath: string
     context: esbuild.BuildContext<{ write: false; metafile: true }>
     metafile: esbuild.Metafile
-    /** Same as `metafile.inputs` but mapped with `baseRelative` */
+    /** Same as `metafile.inputs` but mapped with `fileToId` */
     inputs: string[]
   }
 }

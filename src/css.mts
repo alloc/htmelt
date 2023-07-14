@@ -1,10 +1,10 @@
 import {
   Config,
-  Node,
-  StyleReference,
-  baseRelative,
+  fileToId,
   findElements,
   getAttribute,
+  Node,
+  StyleReference,
 } from '@htmelt/plugin'
 import * as fs from 'fs'
 import { gray, red, yellow } from 'kleur/colors'
@@ -32,7 +32,7 @@ export async function buildCSSFile(
     .flat()
 
   if (!config.virtualFiles[file]) {
-    console.log(yellow('⌁'), baseRelative(file))
+    console.log(yellow('⌁'), fileToId(file))
   }
 
   const bundle = await lightningCss.bundleAsync({
@@ -64,7 +64,7 @@ export async function buildCSSFile(
       console.warn(
         ' ',
         gray(
-          baseRelative(w.loc.filename).slice(1) +
+          fileToId(w.loc.filename).slice(1) +
             ':' +
             w.loc.line +
             ':' +
@@ -118,11 +118,7 @@ export async function buildRelativeStyles(
           }
         })
         .catch(e => {
-          console.error(
-            'Failed to compile "%s":',
-            baseRelative(style.srcPath),
-            e
-          )
+          console.error('Failed to compile "%s":', fileToId(style.srcPath), e)
         })
     )
   )
