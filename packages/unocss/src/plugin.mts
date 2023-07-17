@@ -7,6 +7,7 @@ import {
   parseNamespace,
   Plugin,
   prepend,
+  serialize,
   setTextContent,
 } from '@htmelt/plugin'
 import type { UserConfig } from '@unocss/core'
@@ -143,12 +144,15 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
         if (!headTag) {
           throw Error('No <head> tag found in document: ' + file)
         }
-        if (!bundle.inputs.some(id => moduleMap.has(id))) {
+        const html = serialize(documentElement)
+        const { css, matched } = await uno.generate(html, {
+          id: file,
+        })
+        if (!matched.size && !bundle.inputs.some(id => moduleMap.has(id))) {
           return // no tokens were matched
         }
-        const { css: preflights } = await uno.generate('')
         const styleTag = createElement('style', { type: 'text/css' })
-        setTextContent(styleTag, preflights)
+        setTextContent(styleTag, css)
         prepend(headTag, styleTag)
       },
     }
