@@ -79,9 +79,10 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
 
           console.log('[unocss-esbuild] updating virtual file', cssPath)
 
-          // If a CSS file exists for this JS module, simply append the generated CSS to it instead
-          // of creating a separate virtual file. Before loading the CSS file, we should unset any
-          // previous virtual file from this plugin.
+          // If a CSS file exists for this JS module, simply append the
+          // generated CSS to it instead of creating a separate virtual file.
+          // Before loading the CSS file, we should unset any previous virtual
+          // file from this plugin.
           if (existsSync(cssPath)) {
             config.unsetVirtualFile(cssPath)
             const promise = build

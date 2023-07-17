@@ -318,8 +318,9 @@ export async function bundle(config: Config, flags: BundleFlags) {
       console.log(cyan('+'), file)
     })*/
 
-    // This listener supports absolute file paths, files relative to the working directory, and
-    // namespaced IDs. So if a virtual file is changed, you can call…
+    // This listener supports absolute file paths, files relative to the working
+    // directory, and namespaced IDs. So if a virtual file is changed, you can
+    // call…
     //     config.watcher.add("virtual:some/generated/module.js")
     // …to reload the bundle or send HMR updates.
     watcher.on('change', file => {
@@ -462,8 +463,9 @@ export async function bundle(config: Config, flags: BundleFlags) {
         }),
         ...htmlRebuildPromises,
         ...scriptRebuildPromises,
-        // Rebuild all styles if a .css file is changed at the same time that a full reload was
-        // triggered, since the .css file may be imported by a page/script that changed.
+        // Rebuild all styles if a .css file is changed at the same time that a
+        // full reload was triggered, since the .css file may be imported by a
+        // page/script that changed.
         isFullReload &&
           stylesChanged &&
           build.rebuildStyles().catch(error => {

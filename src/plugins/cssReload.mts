@@ -52,8 +52,9 @@ export const cssReloadPlugin: Plugin = (config, flags) => {
       return {
         accept: file => file.endsWith('.css'),
         async update(files) {
-          // If every updated file is an entry, only update them. Otherwise, update every single
-          // entry, since we don't currently track dependencies.
+          // If every updated file is an entry, only update them. Otherwise,
+          // update every single entry, since we don't currently track
+          // dependencies.
           const dirtyFiles = files.some(file => !cssEntries.has(file))
             ? Array.from(cssEntries.keys())
             : files
