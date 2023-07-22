@@ -98,8 +98,8 @@ importers:
       esbuild-extra: ^0.2.0
       md5-hex: ^4.0.0
       mitt: ^3.0.0
+      mrmime: ^1.0.1
       parse5: ^6.0.1
-      type-fest: ^3.6.0
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@types/node': 20.2.1
@@ -109,10 +109,10 @@ importers:
       esbuild-extra: 0.2.0_esbuild@0.17.17
       md5-hex: 4.0.0
       mitt: 3.0.0
+      mrmime: 1.0.1
       parse5: 6.0.1
     devDependencies:
       '@alloc/fast-rimraf': 1.0.8
-      type-fest: 3.8.0
 
   packages/preval:
     specifiers:
@@ -4406,6 +4406,7 @@ packages:
   /type-fest/3.8.0:
     resolution: {integrity: sha512-FVNSzGQz9Th+/9R6Lvv7WIAkstylfHN2/JYxkyhhmKFYh9At2DST8t6L6Lref9eYO8PXFTfG9Sg1Agg0K3vq3Q==}
     engines: {node: '>=14.16'}
+    dev: false
 
   /typedarray-to-buffer/3.1.5:
     resolution: {integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==}
