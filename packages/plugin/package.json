@@ -22,6 +22,7 @@
     "esbuild-extra": "^0.2.0",
     "md5-hex": "^4.0.0",
     "mitt": "^3.0.0",
+    "mrmime": "^1.0.1",
     "parse5": "^6.0.1"
   },
   "devDependencies": {
