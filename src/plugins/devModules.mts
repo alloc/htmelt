@@ -5,7 +5,7 @@ import { nebu, Node as NebuNode, Plugin as NebuPlugin } from 'nebu'
 import { dirname } from 'path'
 import { compileSeparateEntry } from '../esbuild.mjs'
 import { appendInlineSourceMap } from '../sourceMaps.mjs'
-import { resolveDevMapSources } from '../utils.mjs'
+import { findWorkspaceRoot, resolveDevMapSources } from '../utils.mjs'
 import importGlobPlugin from './importGlob/index.mjs'
 import metaUrlPlugin from './importMetaUrl.mjs'
 
@@ -288,7 +288,14 @@ export const devModulesPlugin: Plugin = async config => {
             if (id.startsWith('/@fs' + dir + '/')) {
               const file = id.slice(4)
               config.watcher!.add(file)
-              config.fsAllowedDirs.add(dirname(file))
+
+              const rootDir = findWorkspaceRoot(
+                dirname(file),
+                config.fsAllowedDirs
+              )
+              if (rootDir && !config.fsAllowedDirs.has(rootDir)) {
+                config.fsAllowedDirs.add(rootDir)
+              }
             }
           }
 

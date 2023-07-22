@@ -8,6 +8,7 @@ import {
 import cac from 'cac'
 import * as fs from 'fs'
 import * as net from 'net'
+import * as os from 'os'
 import * as path from 'path'
 
 export function parseFlags(cli = cac()): Flags {
@@ -100,4 +101,31 @@ export function removePathSuffix(str: string) {
     return str
   }
   return str.slice(0, suffixStart)
+}
+
+/** Starting with fromDir, look for .git folder or package.json */
+export function findWorkspaceRoot(fromDir: string, stopDirs?: Set<string>) {
+  const homeDir = os.homedir()
+  const cwd = process.cwd()
+
+  let dir = fromDir
+  while (true) {
+    if (
+      dir === '/' ||
+      dir === homeDir ||
+      cwd.startsWith(dir + '/') ||
+      stopDirs?.has(dir)
+    ) {
+      return null
+    }
+    if (fs.existsSync(path.join(dir, '.git'))) {
+      break
+    }
+    if (fs.existsSync(path.join(dir, 'package.json'))) {
+      break
+    }
+    dir = path.dirname(dir)
+  }
+
+  return dir
 }
