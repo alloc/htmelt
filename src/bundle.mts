@@ -5,7 +5,9 @@ import {
   md5Hex,
   parseNamespace,
   Plugin,
+  sendFile,
   ServePlugin,
+  uriToFile,
   uriToId,
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
@@ -13,7 +15,6 @@ import * as fs from 'fs'
 import glob from 'glob'
 import { cyan, red, yellow } from 'kleur/colors'
 import mitt, { Emitter } from 'mitt'
-import * as mime from 'mrmime'
 import * as path from 'path'
 import { performance } from 'perf_hooks'
 import { debounce } from 'ts-debounce'
@@ -32,12 +33,7 @@ import {
 import { buildHTML, parseHTML } from './html.mjs'
 import { loadVirtualFile } from './plugins/virtualFiles.mjs'
 import { updateRelatedWatcher } from './relatedWatcher.mjs'
-import {
-  createDir,
-  lowercaseKeys,
-  resolveDevMapSources,
-  setsEqual,
-} from './utils.mjs'
+import { createDir, resolveDevMapSources, setsEqual } from './utils.mjs'
 
 type PartialBundle = {
   id: string
@@ -520,18 +516,9 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
   )
 
   const loadFile = async (uri: string, request: Plugin.Request) => {
-    let filePath: string | undefined
-    let file: Plugin.VirtualFileData | null = null
-
     const id = uriToId(uri)
     const namespace = parseNamespace(id)
-    const isFileRequest = uri.startsWith('/@fs/')
-
-    if (isFileRequest) {
-      filePath = uri.slice(4)
-    } else if (!namespace) {
-      filePath = path.join(process.cwd(), uri)
-    }
+    const filePath = !namespace ? uriToFile(uri) : null
 
     let virtualFile = config.virtualFiles[uri]
     if (!virtualFile) {
@@ -547,6 +534,7 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
       }
     }
 
+    let file: Plugin.VirtualFileData | null = null
     if (virtualFile) {
       file = await loadVirtualFile(virtualFile, uri, config, request)
       if (file) {
@@ -558,7 +546,7 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     // If no virtual file exists, check the local filesystem.
     if (!file && filePath) {
       let isAllowed = false
-      if (isFileRequest) {
+      if (uri.startsWith('/@fs/')) {
         for (const dir of config.fsAllowedDirs) {
           if (!path.relative(dir, filePath).startsWith('..')) {
             isAllowed = true
@@ -620,23 +608,12 @@ async function installHttpServer(config: Config, servePlugins: ServePlugin[]) {
     }
 
     if (file) {
-      const headers = (file.headers && lowercaseKeys(file.headers)) || {}
-      headers['access-control-allow-origin'] ||= '*'
-      headers['cache-control'] ||= 'no-store'
-      headers['content-type'] ||=
-        mime.lookup(file.path || request.pathname) || 'application/octet-stream'
-
-      response.statusCode = 200
-      for (const [name, value] of Object.entries(headers)) {
-        response.setHeader(name, value)
-      }
-      response.end(file.data)
-      return
+      sendFile(request.pathname, response, file)
+    } else {
+      console.log(red('404: %s'), req.url)
+      response.statusCode = 404
+      response.end()
     }
-
-    console.log(red('404: %s'), req.url)
-    response.statusCode = 404
-    response.end()
   })
 
   server.listen(port, () => {

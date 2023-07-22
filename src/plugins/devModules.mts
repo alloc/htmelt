@@ -1,4 +1,12 @@
-import { fileToId, Module, Plugin } from '@htmelt/plugin'
+import {
+  fileToId,
+  Module,
+  parseNamespace,
+  Plugin,
+  sendFile,
+  uriToFile,
+  uriToId,
+} from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { ESTree, parse } from 'meriyah'
 import { nebu, Node as NebuNode, Plugin as NebuPlugin } from 'nebu'
@@ -306,6 +314,26 @@ export const devModulesPlugin: Plugin = async config => {
       })
     },
   })
+
+  return {
+    async serve({ path, searchParams }, response) {
+      if (searchParams.has('t')) {
+        const id = uriToId(path)
+        const namespace = parseNamespace(id)
+        const filePath = !namespace ? uriToFile(path) : undefined
+        try {
+          const data = await config.loadDevModule(filePath || id)
+          sendFile(path, response, {
+            path: filePath,
+            data,
+            headers: {
+              'content-type': 'application/javascript',
+            },
+          })
+        } catch {}
+      }
+    },
+  }
 }
 
 function jsonAccessor(name: string) {

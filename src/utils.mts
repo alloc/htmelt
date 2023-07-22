@@ -50,14 +50,6 @@ export function findFreeTcpPort() {
   })
 }
 
-export function lowercaseKeys<T extends object>(obj: T): T {
-  const result: any = {}
-  for (const [key, value] of Object.entries(obj)) {
-    result[key.toLowerCase()] = value
-  }
-  return result
-}
-
 export function resolveDevMapSources(
   map: any,
   root: string,

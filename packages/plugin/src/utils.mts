@@ -1,4 +1,7 @@
-import path from 'path'
+import * as http from 'http'
+import * as mime from 'mrmime'
+import * as path from 'path'
+import type { Plugin } from './plugin.mjs'
 
 export function fileToId(
   file: string,
@@ -46,6 +49,13 @@ export function uriToId(uri: string) {
   return uri.includes(':') ? uri.slice(1) : uri
 }
 
+export function uriToFile(uri: string, cwd = process.cwd()) {
+  if (uri.startsWith('/@fs/')) {
+    return uri.slice(4)
+  }
+  return path.join(cwd, uri)
+}
+
 export function parseNamespace(id: string) {
   const firstSlashIdx = id.indexOf('/')
   if (firstSlashIdx !== 0) {
@@ -58,4 +68,30 @@ export function parseNamespace(id: string) {
     }
   }
   return null
+}
+
+export function sendFile(
+  uri: string,
+  response: http.ServerResponse,
+  file: Plugin.VirtualFileData
+): void {
+  const headers = (file.headers && lowercaseKeys(file.headers)) || {}
+  headers['access-control-allow-origin'] ||= '*'
+  headers['cache-control'] ||= 'no-store'
+  headers['content-type'] ||=
+    mime.lookup(file.path || uri) || 'application/octet-stream'
+
+  response.statusCode = 200
+  for (const [name, value] of Object.entries(headers)) {
+    response.setHeader(name, value)
+  }
+  response.end(file.data)
+}
+
+export function lowercaseKeys<T extends object>(obj: T): T {
+  const result: any = {}
+  for (const [key, value] of Object.entries(obj)) {
+    result[key.toLowerCase()] = value
+  }
+  return result
 }
