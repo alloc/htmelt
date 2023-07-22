@@ -14,12 +14,10 @@ export function createRelatedWatcher(config: Config) {
 
   return {
     watchFile(file: string, relatedFile: string) {
-      console.log('File %s watched by %s', file, relatedFile)
       fileWatcher.add(file)
       addToMappedSet(relatedFiles, file, relatedFile)
     },
     watchDirectory(dir: string, relatedFile: string) {
-      console.log('Directory %s watched by %s', dir, relatedFile)
       dirWatcher.add(dir)
       addToMappedSet(relatedFiles, dir, relatedFile)
     },

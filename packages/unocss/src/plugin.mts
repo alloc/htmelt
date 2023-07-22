@@ -53,8 +53,6 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
           const file = args.path
           const id = fileToId(file)
 
-          console.log('[unocss:esbuild] transform', file)
-
           let css = cache?.[file]
           if (css === undefined) {
             const unoResult = await uno.generate(args.code, {
@@ -77,8 +75,6 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
           let code: string | undefined
           let cssPath = args.path.replace(/\.([jt]sx?)$/, '.css')
           let watchFiles: string[] | undefined
-
-          console.log('[unocss-esbuild] updating virtual file', cssPath)
 
           // If a CSS file exists for this JS module, simply append the
           // generated CSS to it instead of creating a separate virtual file.
