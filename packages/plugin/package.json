@@ -19,7 +19,7 @@
     "@types/parse5": "^6.0.1",
     "cac": "^6.7.14",
     "esbuild": "^0.17.12",
-    "esbuild-extra": "^0.2.0",
+    "esbuild-extra": "^0.3.0",
     "md5-hex": "^4.0.0",
     "mitt": "^3.0.0",
     "mrmime": "^1.0.1",
