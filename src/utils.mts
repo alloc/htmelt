@@ -3,7 +3,9 @@ import {
   Flags,
   getAttribute,
   getTagName,
+  LeadingArgv,
   Node,
+  TrailingArgv,
 } from '@htmelt/plugin'
 import cac from 'cac'
 import * as fs from 'fs'
@@ -11,11 +13,18 @@ import * as net from 'net'
 import * as os from 'os'
 import * as path from 'path'
 
-export function parseFlags(cli = cac()): Flags {
+export function parseFlags(cli = cac()) {
   const {
     args: pre,
     options: { '--': post, ...flags },
-  } = cli.parse() as any
+  } = cli.parse() as {
+    args: string[]
+    options: Flags &
+      LeadingArgv &
+      TrailingArgv & {
+        '--': string[]
+      }
+  }
   flags.pre = pre
   flags.post = post
   return flags

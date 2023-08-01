@@ -39,7 +39,7 @@ type PartialBundle = {
 }
 
 export async function bundle(config: Config, flags: BundleFlags) {
-  if (config.deletePrev) {
+  if (flags.deletePrev ?? config.deletePrev) {
     fs.rmSync(config.build, { force: true, recursive: true })
   }
 

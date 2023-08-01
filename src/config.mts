@@ -221,7 +221,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     mode: nodeEnv,
     src: srcDir,
     build: outDir,
-    base: userConfig.base ?? '/' + path.relative(process.cwd(), outDir) + '/',
+    base:
+      flags.base ??
+      userConfig.base ??
+      '/' + path.relative(process.cwd(), outDir) + '/',
     entries,
     plugins: [],
     bundles: undefined!,
