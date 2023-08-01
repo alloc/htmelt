@@ -64,6 +64,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     .filter(file => {
       return !file.startsWith(outDirPrefix)
     })
+    .concat(userConfig.forcedEntries || [])
     .map(file => ({
       file,
     }))

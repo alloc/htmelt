@@ -35,6 +35,11 @@ export type UserConfig = {
    */
   scripts?: string[]
   /**
+   * Additional entry points to include in the build. This can be useful if you
+   * want to import a module for unbundled scripting purposes.
+   */
+  forcedEntries?: string[]
+  /**
    * Import aliases can be map to another specifier or a virtual file.
    */
   alias?: Record<string, string | Plugin.VirtualFile>
