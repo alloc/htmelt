@@ -42,7 +42,7 @@ let critters: Critters
 export async function buildHTML(
   document: Plugin.Document,
   config: Config,
-  flags: { watch?: boolean; critical?: boolean }
+  flags: { watch?: boolean; minify?: boolean; critical?: boolean }
 ) {
   console.log(yellow('⌁'), fileToId(document.file))
   const outFile = config.getBuildPath(document.file)
@@ -75,14 +75,16 @@ export async function buildHTML(
   let html = serialize(document.documentElement)
 
   if (!flags.watch) {
-    try {
-      html = await minify(html, {
-        collapseWhitespace: true,
-        removeComments: true,
-        ...config.htmlMinifierTerser,
-      })
-    } catch (e) {
-      console.error(e)
+    if (flags.minify !== false) {
+      try {
+        html = await minify(html, {
+          collapseWhitespace: true,
+          removeComments: true,
+          ...config.htmlMinifierTerser,
+        })
+      } catch (e) {
+        console.error(e)
+      }
     }
 
     if (flags.critical) {
