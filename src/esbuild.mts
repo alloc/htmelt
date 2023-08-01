@@ -2,6 +2,7 @@ import {
   Config,
   fileToId,
   getAttribute,
+  isRelativePath,
   ParentNode,
   ScriptReference,
 } from '@htmelt/plugin'
@@ -80,7 +81,7 @@ export function findRelativeScripts(
   const results: ScriptReference[] = []
   for (const scriptNode of findExternalScripts(document)) {
     const srcAttr = scriptNode.attrs.find(a => a.name === 'src')
-    if (srcAttr?.value.startsWith('./')) {
+    if (srcAttr && isRelativePath(srcAttr.value)) {
       const srcPath = path.join(path.dirname(file), srcAttr.value)
       results.push({
         node: scriptNode,

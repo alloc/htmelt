@@ -3,6 +3,7 @@ import {
   fileToId,
   findElements,
   getAttribute,
+  isRelativePath,
   Node,
   StyleReference,
 } from '@htmelt/plugin'
@@ -89,7 +90,7 @@ export function findRelativeStyles(
   const results: StyleReference[] = []
   for (const styleNode of findStyleSheets(document)) {
     const srcAttr = styleNode.attrs.find(a => a.name === 'href')
-    if (srcAttr?.value.startsWith('./')) {
+    if (srcAttr && isRelativePath(srcAttr.value)) {
       const srcPath = path.join(path.dirname(file), srcAttr.value)
       results.push({
         node: styleNode,

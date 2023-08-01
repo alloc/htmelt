@@ -95,3 +95,9 @@ export function lowercaseKeys<T extends object>(obj: T): T {
   }
   return result
 }
+
+export function isRelativePath(path: string) {
+  if (path[0] !== '.') return false
+  if (path[1] === '/') return true
+  return path[1] === '.' && path[2] === '/'
+}
