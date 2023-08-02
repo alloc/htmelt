@@ -20,7 +20,7 @@ function connect() {
   let connected = false
   ws.onopen = () => {
     if (!connected) {
-      console.log('[HMR] connected')
+      console.info('[HMR] connected')
       connected = true
     }
   }
@@ -34,7 +34,7 @@ function connect() {
   ws.onerror = reconnect
   ws.onclose = () => {
     if (connected) {
-      console.log('[HMR] disconnected')
+      console.info('[HMR] disconnected')
       connected = false
     }
     reconnect()
