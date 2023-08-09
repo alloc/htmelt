@@ -216,7 +216,6 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   const config: Config = {
     assets: 'public',
     deletePrev: false,
-    isCritical: false,
     ...userConfig,
     mode: nodeEnv,
     src: srcDir,

@@ -10,7 +10,6 @@ import {
   Plugin,
   serialize,
 } from '@htmelt/plugin'
-import Critters from 'critters'
 import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
@@ -37,12 +36,10 @@ export function parseHTML(html: string) {
   return document
 }
 
-let critters: Critters
-
 export async function buildHTML(
   document: Plugin.Document,
   config: Config,
-  flags: { watch?: boolean; minify?: boolean; critical?: boolean }
+  flags: { watch?: boolean; minify?: boolean }
 ) {
   console.log(yellow('⌁'), fileToId(document.file))
   const outFile = config.getBuildPath(document.file)
@@ -84,23 +81,6 @@ export async function buildHTML(
         })
       } catch (e) {
         console.error(e)
-      }
-    }
-
-    if (flags.critical) {
-      try {
-        const isPartical = !html.startsWith('<!DOCTYPE html>')
-        critters ||= new Critters({
-          path: config.build,
-          logLevel: 'silent',
-        })
-        html = await critters.process(html)
-        // fix critters jsdom
-        if (isPartical) {
-          html = html.replace(/<\/?(html|head|body)>/g, '')
-        }
-      } catch (err) {
-        console.error(err)
       }
     }
   }

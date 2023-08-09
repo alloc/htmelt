@@ -9,7 +9,6 @@ export interface Flags {
 }
 
 export interface BundleFlags extends Flags {
-  critical?: boolean
   deletePrev?: boolean
   minify?: boolean
 }

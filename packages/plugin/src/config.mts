@@ -63,7 +63,6 @@ export type UserConfig = {
   esbuild?: esbuild.BuildOptions
   lightningCss?: Omit<lightningCss.BundleAsyncOptions<any>, 'filename'>
   htmlMinifierTerser?: htmlMinifierTerser.Options
-  isCritical?: boolean
   deletePrev?: boolean
   plugins?: Plugin[]
 }

@@ -25,7 +25,6 @@ into CSS/JS bundles.
   - sets `NODE_ENV=development`
 - default mode
   - HTML/JS/CSS minification
-  - critical CSS extraction (via `isCritical` option or `--critical` flag)
   - sets `NODE_ENV=production`
 
 ### Usage
@@ -65,8 +64,6 @@ export default {
   // Tool-specific options.
   esbuild: {...},
   lightningcss: {...},
-  // If true, will extract critical CSS from the HTML files.
-  isCritical: false,
   // If true, will delete the build directory before building.
   deletePrev: false,
 }
