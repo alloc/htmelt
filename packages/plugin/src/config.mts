@@ -97,7 +97,7 @@ export interface Module {
 }
 
 export type Config = Merge<
-  Required<Omit<UserConfig, 'watchFiles'>>,
+  Required<Omit<UserConfig, 'forcedEntries' | 'watchFiles'>>,
   ConfigAPI & {
     mode: string
     entries: Entry[]
