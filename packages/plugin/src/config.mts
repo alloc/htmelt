@@ -70,12 +70,20 @@ export type UserConfig = {
 export type RawServerConfig = {
   port?: number
   https?: boolean | HttpsConfig
+  /**
+   * Add hosts to the Content-Security-Policy response header set for `.html`
+   * requests in development mode.
+   *
+   * Useful for allowing insecure localhost requests in Safari.
+   */
+  allowHosts?: string[]
 }
 
 export type ServerConfig = {
   url: URL
   port: number
   https?: { cert?: string; key?: string }
+  allowHosts?: string[]
 }
 
 export type HttpsConfig = {

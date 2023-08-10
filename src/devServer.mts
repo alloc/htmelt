@@ -123,18 +123,29 @@ export async function installHttpServer(
     }
 
     // If no plugin handled the request, check the virtual filesystem.
-    let uri = request.pathname
+    const filePath = request.pathname
     if (!file) {
-      file = await loadFile(uri, request)
-      if (!file && !uri.startsWith('/@fs/')) {
-        uri = path.posix.join('/', config.build, uri)
-        file = await loadFile(uri, request)
-        if (!file && !uri.endsWith('/')) {
-          file = await loadFile(uri + '.html', request)
+      file = await loadFile(filePath, request)
+
+      if (!file && !filePath.startsWith('/@fs/')) {
+        const buildPath = path.posix.join('/', config.build, filePath)
+        file = await loadFile(buildPath, request)
+
+        if (!file && !buildPath.endsWith('/')) {
+          file = await loadFile(buildPath + '.html', request)
         }
+
         if (!file) {
-          uri = path.posix.join(uri, 'index.html')
-          file = await loadFile(uri, request)
+          const indexPath = path.posix.join(buildPath, 'index.html')
+          file = await loadFile(indexPath, request)
+        }
+      }
+
+      if (file?.path?.endsWith('.html') && config.server.allowHosts) {
+        const hosts = config.server.allowHosts.join(' ')
+        file.headers = {
+          ...file.headers,
+          'Content-Security-Policy': `default-src 'self' ${hosts}`,
         }
       }
     }
