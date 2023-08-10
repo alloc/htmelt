@@ -5,20 +5,25 @@ import {
   mitt,
   parseNamespace,
   Plugin,
+  RawServerConfig,
   sendFile,
   ServePlugin,
   uriToFile,
   uriToId,
 } from '@htmelt/plugin'
+import builtinModules from 'builtin-modules'
+import * as esbuild from 'esbuild'
+import { getBuildExtensions } from 'esbuild-extra'
 import * as fs from 'fs'
-import { cyan, red } from 'kleur/colors'
+import * as http from 'http'
+import { cyan, green, red } from 'kleur/colors'
 import * as path from 'path'
 import { parse as parseURL } from 'url'
 import * as uuid from 'uuid'
 import * as ws from 'ws'
 import { compileSeparateEntry } from './esbuild.mjs'
 import { loadVirtualFile } from './plugins/virtualFiles.mjs'
-import { resolveDevMapSources } from './utils.mjs'
+import { findDirectoryUp, resolveDevMapSources } from './utils.mjs'
 
 export async function installHttpServer(
   config: Config,
@@ -46,7 +51,7 @@ export async function installHttpServer(
     `^/(${[config.build, config.assets].join('|')})/`
   )
 
-  const loadFile = async (uri: string, request: Plugin.Request) => {
+  const serveFile = async (uri: string, request: Plugin.Request) => {
     const id = uriToId(uri)
     const namespace = parseNamespace(id)
     const filePath = !namespace ? uriToFile(uri) : null
@@ -111,7 +116,17 @@ export async function installHttpServer(
     return file
   }
 
-  const server = createServer({ cert, key }, async (req, response) => {
+  const serve = async (
+    req: http.IncomingMessage,
+    response: http.ServerResponse
+  ) => {
+    if (config.server.handler) {
+      await (void 0, config.server.handler)(req, response)
+      if (response.headersSent) {
+        return
+      }
+    }
+
     const request = Object.assign(req, parseURL(req.url!)) as Plugin.Request
     request.searchParams = new URLSearchParams(request.search || '')
 
@@ -125,16 +140,16 @@ export async function installHttpServer(
     // If no plugin handled the request, check the virtual filesystem.
     let uri = request.pathname
     if (!file) {
-      file = await loadFile(uri, request)
+      file = await serveFile(uri, request)
       if (!file && !uri.startsWith('/@fs/')) {
         uri = path.posix.join('/', config.build, uri)
-        file = await loadFile(uri, request)
+        file = await serveFile(uri, request)
         if (!file && !uri.endsWith('/')) {
-          file = await loadFile(uri + '.html', request)
+          file = await serveFile(uri + '.html', request)
         }
         if (!file) {
           uri = path.posix.join(uri, 'index.html')
-          file = await loadFile(uri, request)
+          file = await serveFile(uri, request)
         }
       }
     }
@@ -146,6 +161,14 @@ export async function installHttpServer(
       response.statusCode = 404
       response.end()
     }
+  }
+
+  const server = createServer({ cert, key }, (req, res) => {
+    serve(req, res).catch(err => {
+      console.error(err)
+      res.statusCode = 500
+      res.end()
+    })
   })
 
   server.listen(port, () => {
@@ -154,6 +177,10 @@ export async function installHttpServer(
       url.protocol.slice(0, -1),
       port
     )
+  })
+
+  server.on('close', () => {
+    config.server.handlerContext?.dispose()
   })
 
   return server
@@ -319,5 +346,177 @@ async function getCertificate(cacheDir: string) {
       fs.writeFileSync(cachePath, content)
     } catch {}
     return content
+  }
+}
+
+export async function importHandler(
+  handler: Exclude<RawServerConfig['handler'], void>,
+  config: Config
+): Promise<esbuild.BuildContext> {
+  const handlerPath = path.resolve(handler.entry)
+  const handlerDir = path.dirname(handlerPath)
+
+  const nodeModulesRoot = findDirectoryUp(handlerDir, ['node_modules'])
+  if (!nodeModulesRoot) {
+    throw Error('Could not find node_modules directory')
+  }
+
+  const nodeModulesDir = path.join(nodeModulesRoot, 'node_modules')
+  const outFile = path.join(nodeModulesDir, `handler.${Date.now()}.mjs`)
+
+  // Remove any old handler artifacts
+  fs.readdirSync(nodeModulesDir).forEach(name => {
+    if (name.match(/^handler\.\d+\.mjs/)) {
+      fs.unlinkSync(path.join(nodeModulesDir, name))
+    }
+  })
+
+  const workspaceRoot =
+    (findDirectoryUp(handlerDir, ['.git', 'pnpm-workspace.yaml']) ||
+      handlerDir) + '/'
+
+  const userExternal =
+    handler.external?.map(pattern => {
+      if (typeof pattern === 'string') {
+        return (file: string) => {
+          if (file.startsWith(workspaceRoot)) {
+            file = file.slice(workspaceRoot.length - 1)
+          }
+          return file.includes('/' + pattern + '/')
+        }
+      }
+      return (file: string) => pattern.test(file)
+    }) || []
+
+  const createHandler = async (handlerPath: string) => {
+    try {
+      const handlerModule = await import(handlerPath)
+      const createHandler = handlerModule.default
+
+      const isReload = !!config.server.handler
+      config.server.handler = await createHandler('development')
+
+      if (isReload) {
+        console.log(cyan('↺'), 'server.handler reloaded without error')
+      } else {
+        console.log(green('✔️'), 'server.handler loaded without error')
+      }
+    } catch (e: any) {
+      console.error('Failed to import handler:', e)
+      config.server.handler = (_req, res) => {
+        res.writeHead(500)
+        res.end('Failed to import handler')
+      }
+    }
+  }
+
+  const sourceMapSupport = await import('source-map-support')
+  sourceMapSupport.install({
+    hookRequire: true,
+  })
+
+  const context = await esbuild.context({
+    entryPoints: [handlerPath],
+    entryNames: '[dir]/[name].[hash]',
+    bundle: true,
+    format: 'esm',
+    outfile: outFile,
+    platform: 'node',
+    plugins: [
+      externalize(file => {
+        return (
+          file.includes('node_modules') ||
+          !file.startsWith(workspaceRoot) ||
+          userExternal.some(test => test(file))
+        )
+      }),
+      reloadHandler(createHandler),
+      replaceImportMetaUrl(),
+    ],
+    sourcemap: true,
+    splitting: false,
+    write: false,
+  })
+
+  await context.watch()
+  return context
+}
+
+function replaceImportMetaUrl(): esbuild.Plugin {
+  const name = 'replace-import-meta-url'
+  return {
+    name,
+    setup(build) {
+      const { onTransform } = getBuildExtensions(build, name)
+      onTransform({ loaders: ['js'] }, args => {
+        const code = args.code.replace(
+          /\bimport\.meta\.url\b/g,
+          JSON.stringify(new URL(args.initialPath || args.path, 'file:').href)
+        )
+        return { code }
+      })
+    },
+  }
+}
+
+function reloadHandler(
+  setHandlerPath: (handlerPath: string) => void
+): esbuild.Plugin {
+  let lastHandlerPath: string | undefined
+  return {
+    name: 'reload-handler',
+    setup(build) {
+      build.onEnd(({ outputFiles }) => {
+        outputFiles!.forEach(file => {
+          fs.writeFileSync(file.path, file.contents)
+        })
+        const handlerPath = outputFiles![1].path
+        if (handlerPath !== lastHandlerPath) {
+          lastHandlerPath = handlerPath
+          setHandlerPath(handlerPath)
+        }
+      })
+    },
+  }
+}
+
+function externalize(filter: (file: string) => boolean): esbuild.Plugin {
+  return {
+    name: 'externalize',
+    setup(build) {
+      const skipped = new Set<string>()
+      build.onResolve({ filter: /^/ }, async ({ path: id, ...args }) => {
+        if (args.kind === 'entry-point') {
+          return null
+        }
+
+        if (!path.isAbsolute(id)) {
+          if (builtinModules.includes(id)) {
+            return { external: true }
+          }
+
+          const importKey = id + ':' + args.importer
+          if (skipped.has(importKey)) {
+            return null
+          }
+
+          skipped.add(importKey)
+          const resolved = await build.resolve(id, args)
+          skipped.delete(importKey)
+
+          if (resolved) {
+            id = resolved.path
+          }
+        }
+
+        if (!filter(id)) {
+          return null
+        }
+
+        return {
+          external: true,
+        }
+      })
+    },
   }
 }

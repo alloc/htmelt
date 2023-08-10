@@ -1,5 +1,6 @@
 import * as chokidar from 'chokidar'
 import * as esbuild from 'esbuild'
+import * as http from 'http'
 import * as htmlMinifierTerser from '../types/html-minifier-terser'
 import * as lightningCss from '../types/lightningcss'
 import type { Merge } from '../types/type-fest'
@@ -70,12 +71,50 @@ export type UserConfig = {
 export type RawServerConfig = {
   port?: number
   https?: boolean | HttpsConfig
+  /**
+   * In development mode, you can have the dev server import your API server's
+   * request handler directly. This is useful for testing your API server
+   * without having to run it separately.
+   */
+  handler?: {
+    /**
+     * The module path to your API server's request handler factory. The factory
+     * is always passed `"development"` even if you set `config.mode` or
+     * `NODE_ENV` to something else.
+     *
+     * It must point to a JavaScript or TypeScript module whose default export
+     * is a function like this:
+     *
+     *     (env?: 'development') => (req: IncomingMessage, res: ServerResponse) => Promise<void> | void
+     */
+    entry: string
+    /**
+     * Prevent bundling of any modules whose resolved ID is matched by any of
+     * the given strings or regular expressions. Only the full module paths are
+     * matched against for regular expressions, while strings are matched
+     * against each directory segment after the workspace root.
+     *
+     * This is useful for pre-compiled packages that live in your workspace
+     * outside of a `node_modules` directory.
+     *
+     * Note that `node_modules` and files outside the workspace root are always
+     * externalized.
+     */
+    external?: (string | RegExp)[]
+  }
 }
+
+export type RequestHandler = (
+  req: http.IncomingMessage,
+  res: http.ServerResponse
+) => Promise<void> | void
 
 export type ServerConfig = {
   url: URL
   port: number
   https?: { cert?: string; key?: string }
+  handler?: RequestHandler
+  handlerContext?: esbuild.BuildContext
 }
 
 export type HttpsConfig = {

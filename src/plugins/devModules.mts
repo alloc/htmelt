@@ -13,7 +13,7 @@ import { nebu, Node as NebuNode, Plugin as NebuPlugin } from 'nebu'
 import { dirname } from 'path'
 import { compileSeparateEntry } from '../esbuild.mjs'
 import { appendInlineSourceMap } from '../sourceMaps.mjs'
-import { findWorkspaceRoot, resolveDevMapSources } from '../utils.mjs'
+import { findDirectoryUp, resolveDevMapSources } from '../utils.mjs'
 import importGlobPlugin from './importGlob/index.mjs'
 import metaUrlPlugin from './importMetaUrl.mjs'
 
@@ -297,8 +297,9 @@ export const devModulesPlugin: Plugin = async config => {
               const file = id.slice(4)
               config.watcher!.add(file)
 
-              const rootDir = findWorkspaceRoot(
+              const rootDir = findDirectoryUp(
                 dirname(file),
+                ['.git', 'package.json'],
                 config.fsAllowedDirs
               )
               if (rootDir && !config.fsAllowedDirs.has(rootDir)) {

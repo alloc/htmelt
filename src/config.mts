@@ -17,6 +17,7 @@ import * as lightningCss from 'lightningcss'
 import * as path from 'path'
 import { loadConfig } from 'unconfig'
 import { promisify } from 'util'
+import { importHandler } from './devServer.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
 import { findFreeTcpPort } from './utils.mjs'
 
@@ -201,12 +202,23 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         (https ? 'wss' : 'ws') + '://localhost:' + port
       )
 
-      return (config.server = {
+      config.server = {
         ...serverConfig,
+        handler: undefined,
+        handlerContext: undefined,
         https,
         port,
         url,
-      })
+      }
+
+      if (serverConfig.handler) {
+        config.server.handlerContext = await importHandler(
+          serverConfig.handler,
+          config
+        )
+      }
+
+      return config.server
     },
     // Set by the internal ./plugins/devModules.mjs plugin.
     // Not available during plugin setup.

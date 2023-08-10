@@ -104,8 +104,15 @@ export function removePathSuffix(str: string) {
   return str.slice(0, suffixStart)
 }
 
-/** Starting with fromDir, look for .git folder or package.json */
-export function findWorkspaceRoot(fromDir: string, stopDirs?: Set<string>) {
+/**
+ * Starting from `fromDir`, find the first directory that contains any of the
+ * `targetFiles`. Stop searching if one of `stopDirs` is encountered.
+ */
+export function findDirectoryUp(
+  fromDir: string,
+  targetFiles: string[],
+  stopDirs?: Set<string>
+) {
   const homeDir = os.homedir()
   const cwd = process.cwd()
 
@@ -119,10 +126,8 @@ export function findWorkspaceRoot(fromDir: string, stopDirs?: Set<string>) {
     ) {
       return null
     }
-    if (fs.existsSync(path.join(dir, '.git'))) {
-      break
-    }
-    if (fs.existsSync(path.join(dir, 'package.json'))) {
+    const files = fs.readdirSync(dir)
+    if (files.some(file => targetFiles.includes(file))) {
       break
     }
     dir = path.dirname(dir)
