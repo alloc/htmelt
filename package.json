@@ -5,7 +5,7 @@
   "main": "./dist/index.mjs",
   "types": "./index.d.ts",
   "bin": {
-    "htmelt": "./dist/cli.mjs"
+    "htmelt": "./bin/htmelt.mjs"
   },
   "scripts": {
     "dev": "tsup-node --watch --sourcemap",
