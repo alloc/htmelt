@@ -4,6 +4,7 @@ import {
   fileToId,
   parseNamespace,
   Plugin,
+  ScriptReference,
   ServePlugin,
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
@@ -67,20 +68,29 @@ export async function bundle(config: Config, flags: BundleFlags) {
     }
 
     const buildScripts = async (bundle: PartialBundle) => {
-      const importedScripts = new Set(
-        bundle.importers.flatMap(document =>
-          document.scripts.map(script => script.srcPath)
-        )
+      const oldEntries = bundle.entries
+      const newEntries = new Set(bundle.scripts)
+
+      type MutableScriptReference = ScriptReference & { outPath: string }
+
+      // Take the scripts of every document that imports this bundle and then
+      // build them together for optimal code sharing.
+      const scripts = new Set<MutableScriptReference>(
+        bundle.importers.flatMap(document => {
+          for (const script of document.scripts) {
+            newEntries.add(script.srcPath)
+          }
+          return document.scripts
+        })
       )
 
-      const oldEntries = bundle.entries
-      const newEntries = new Set([...bundle.scripts, ...importedScripts])
-
       let { context } = bundle
+
+      // Skip the build if the script paths haven't changed.
       if (!context || !oldEntries || !setsEqual(oldEntries, newEntries)) {
         context = await buildEntryScripts(
-          bundle.scripts,
-          importedScripts,
+          newEntries,
+          bundle.scripts.size > 0 && (entry => bundle.scripts.has(entry)),
           config,
           flags
         )
@@ -91,6 +101,24 @@ export async function bundle(config: Config, flags: BundleFlags) {
       const { metafile } = await context.rebuild()
       bundle.metafile = metafile
       bundle.inputs = toBundleInputs(metafile)
+
+      if (!flags.watch) {
+        const outPaths = Object.keys(metafile.outputs).reduce(
+          (outPaths, outPath) => {
+            const srcPath = metafile.outputs[outPath].entryPoint
+            if (srcPath != null) {
+              outPaths[path.resolve(srcPath)] = path.resolve(outPath)
+            }
+            return outPaths
+          },
+          {} as Record<string, string>
+        )
+
+        for (const script of scripts) {
+          script.outPath = outPaths[script.srcPath]
+        }
+      }
+
       return bundle as Plugin.Bundle
     }
 

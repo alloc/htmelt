@@ -96,12 +96,11 @@ export function findRelativeScripts(
 }
 
 export function buildEntryScripts(
-  standaloneScripts: Set<string>,
-  importedScripts: Set<string>,
+  scripts: Set<string>,
+  isStandalone: ((entry: string) => boolean) | false,
   config: Config,
   flags: { watch?: boolean; minify?: boolean } = {}
 ) {
-  const scripts = new Set([...standaloneScripts, ...importedScripts])
   for (const srcPath of scripts) {
     console.log(yellow('⌁'), fileToId(srcPath))
   }
@@ -113,7 +112,7 @@ export function buildEntryScripts(
   const standaloneScriptPlugin: esbuild.Plugin = {
     name: 'htmelt/standaloneScripts',
     setup(build) {
-      if (!flags.watch || !standaloneScripts.size) {
+      if (!flags.watch || !isStandalone) {
         return
       }
       let stubPath: string | undefined
@@ -123,7 +122,7 @@ export function buildEntryScripts(
           if (!output.entryPoint) continue
 
           const entry = path.resolve(output.entryPoint)
-          if (!standaloneScripts.has(entry)) continue
+          if (!isStandalone(entry)) continue
 
           if (!stubPath) {
             stubPath = path.join(config.build, 'htmelt-stub.js')
@@ -152,6 +151,7 @@ export function buildEntryScripts(
       minify: !flags.watch && flags.minify != false,
       ...config.esbuild,
       entryPoints: [...scripts],
+      entryNames: '[dir]/[name]' + (flags.watch ? '' : '.[hash]'),
       outbase: config.src,
       outdir: config.build,
       metafile: true,

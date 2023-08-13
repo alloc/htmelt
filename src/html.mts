@@ -8,7 +8,9 @@ import {
   parse,
   parseFragment,
   Plugin,
+  ScriptReference,
   serialize,
+  StyleReference,
 } from '@htmelt/plugin'
 import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
@@ -50,13 +52,16 @@ export async function buildHTML(
     return
   }
 
-  for (const ref of [...document.scripts, ...document.styles]) {
-    let outPath = fileToId(ref.outPath)
+  const buildSrcAttr = (ref: ScriptReference | StyleReference) => {
+    let src = fileToId(ref.outPath)
     if (!flags.watch) {
-      outPath = outPath.replace('/' + config.build + '/', config.base)
+      src = src.replace('/' + config.build + '/', config.base)
     }
-    ref.srcAttr.value = outPath
+    ref.srcAttr.value = src
   }
+
+  document.scripts.forEach(buildSrcAttr)
+  document.styles.forEach(buildSrcAttr)
 
   for (const plugin of config.plugins) {
     const hook = plugin.document

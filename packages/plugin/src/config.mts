@@ -217,8 +217,10 @@ export interface ConfigAPI {
   ): chokidar.FSWatcher
   /**
    * Convert a `src` path into a `build` path.
+   *
+   * To include a content hash, provide the content as the second argument.
    */
-  getBuildPath(file: string): string
+  getBuildPath(file: string, contentToHash?: string | Buffer): string
   /**
    * Get the `file:` URL for an absolute or relative file path. If the
    * `id` is relative and `importer` is undefined (or an `https:` URL),

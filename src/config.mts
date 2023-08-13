@@ -5,6 +5,7 @@ import {
   fileToId,
   Flags,
   HttpsConfig,
+  md5Hex,
   Plugin,
   UserConfig,
 } from '@htmelt/plugin'
@@ -141,24 +142,41 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         ignored,
       })
     },
-    getBuildPath(file) {
+    getBuildPath(file, contentToHash) {
+      let outFile = file
+
       const wasAbsolute = path.isAbsolute(file)
       if (wasAbsolute) {
         file = path.relative(process.cwd(), file)
       }
+
       const src = config.src.replace(/^\.\//, '') + '/'
       if (file.startsWith(src)) {
-        file = file.replace(src, config.build + '/')
+        outFile = file.replace(src, config.build + '/')
       } else {
-        file = path.join(
+        // If a file exists outside the working directory, only its basename is
+        // used in the file's build path.
+        outFile = path.join(
           config.build,
           file.startsWith('..') ? path.basename(file) : file
         )
       }
+
+      // Absolute path in, absolute path out
       if (wasAbsolute) {
-        file = path.join(process.cwd(), file)
+        outFile = path.join(process.cwd(), outFile)
       }
-      return file.replace(/\.([cm]?)(?:jsx|tsx?)$/, '.$1js')
+
+      // Replace .jsx/.tsx with .js
+      outFile = outFile.replace(/\.([cm]?)(?:jsx|tsx?)$/, '.$1js')
+
+      // Add a content hash if content was provided
+      if (contentToHash != null) {
+        const contentHash = md5Hex(contentToHash).slice(0, 8).toUpperCase()
+        outFile = outFile.replace(/(\.[^./]+)$/, '.' + contentHash + '$1')
+      }
+
+      return outFile
     },
     resolveDevUrl(id, importer) {
       let url = config.resolve(id, importer)

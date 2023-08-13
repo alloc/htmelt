@@ -78,7 +78,7 @@ export async function buildCSSFile(
 
   return {
     ...bundle,
-    outFile: config.getBuildPath(file),
+    outFile: config.getBuildPath(file, flags.watch ? undefined : bundle.code),
   }
 }
 
@@ -103,8 +103,10 @@ export function findRelativeStyles(
   return results
 }
 
+type MutableStyleReference = StyleReference & { outPath: string }
+
 export async function buildRelativeStyles(
-  styles: StyleReference[],
+  styles: MutableStyleReference[],
   config: Config,
   flags?: { watch?: boolean }
 ) {
@@ -112,6 +114,9 @@ export async function buildRelativeStyles(
     styles.map(style =>
       buildCSSFile(style.srcPath, config, flags)
         .then(result => {
+          // Use the content-hashed filename as the output path.
+          style.outPath = result.outFile
+
           createDir(result.outFile)
           fs.writeFileSync(result.outFile, result.code)
           if (result.map) {
