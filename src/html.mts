@@ -10,11 +10,13 @@ import {
   Plugin,
   ScriptReference,
   serialize,
+  setTextContent,
   StyleReference,
 } from '@htmelt/plugin'
 import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
 import { yellow } from 'kleur/colors'
+import * as lightningCss from 'lightningcss'
 import { injectClientConnection } from './clientUtils.mjs'
 import { buildRelativeStyles } from './css.mjs'
 import { createDir } from './utils.mjs'
@@ -50,6 +52,24 @@ export async function buildHTML(
   } catch (e) {
     console.error(e)
     return
+  }
+
+  if (document.bundle.injectedStyles) {
+    const minifyResult = lightningCss.transform({
+      code: Buffer.from(document.bundle.injectedStyles.join('\n')),
+      filename: document.file + '.css',
+      minify: true,
+    })
+
+    const css = minifyResult.code.toString()
+    const style = createElement('style')
+    setTextContent(style, css)
+
+    const head = findElement(
+      document.documentElement,
+      e => e.tagName === 'head'
+    )!
+    appendChild(head, style)
   }
 
   const buildSrcAttr = (ref: ScriptReference | StyleReference) => {

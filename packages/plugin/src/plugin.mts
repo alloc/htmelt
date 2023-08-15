@@ -135,6 +135,8 @@ export namespace Plugin {
     metafile: esbuild.Metafile
     /** Same as `metafile.inputs` but mapped with `fileToId` */
     inputs: string[]
+    /** Raw CSS code to be concatenated, minified, and injected into the document */
+    injectedStyles?: string[]
   }
 
   /**

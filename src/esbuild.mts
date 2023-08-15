@@ -11,6 +11,8 @@ import { wrapPlugins } from 'esbuild-extra'
 import { readFileSync, writeFileSync } from 'fs'
 import { yellow } from 'kleur/colors'
 import * as path from 'path'
+import { esbuildBundles } from './bundle/context.mjs'
+import { PartialBundle } from './bundle/types.mjs'
 import importGlobPlugin from './plugins/importGlob/index.mjs'
 import metaUrlPlugin from './plugins/importMetaUrl.mjs'
 import { findExternalScripts } from './utils.mjs'
@@ -99,22 +101,69 @@ export function buildEntryScripts(
   scripts: Set<string>,
   isStandalone: ((entry: string) => boolean) | false,
   config: Config,
-  flags: { watch?: boolean; minify?: boolean } = {}
+  flags: { watch?: boolean; minify?: boolean } = {},
+  bundle?: PartialBundle
 ) {
   for (const srcPath of scripts) {
     console.log(yellow('⌁'), fileToId(srcPath))
   }
 
-  // Since we can't prevent a standalone script from sharing a module
-  // with an imported script (well, without duplicating code...), we
-  // need to prepend its output chunk with a stub `htmelt` object, which
-  // ensures a standalone script won't crash on `htmelt.export` calls.
-  const standaloneScriptPlugin: esbuild.Plugin = {
+  let plugins = config.esbuild.plugins || []
+  plugins = [...plugins, metaUrlPlugin(), importGlobPlugin()]
+  if (bundle) {
+    plugins.unshift(assignBundlePlugin(bundle))
+  }
+  if (flags.watch && isStandalone) {
+    plugins.push(standAloneScriptPlugin(isStandalone, config))
+  }
+
+  return esbuild.context(
+    wrapPlugins({
+      format: 'esm',
+      charset: 'utf8',
+      sourcemap: config.mode == 'development',
+      minify: !flags.watch && flags.minify != false,
+      ...config.esbuild,
+      entryPoints: [...scripts],
+      entryNames: '[dir]/[name]' + (flags.watch ? '' : '.[hash]'),
+      outbase: config.src,
+      outdir: config.build,
+      metafile: true,
+      write: true,
+      bundle: true,
+      splitting: true,
+      treeShaking: !flags.watch,
+      ignoreAnnotations: flags.watch,
+      plugins,
+    })
+  )
+}
+
+/**
+ * Ensure we can associate the `esbuild` context with the bundle being built.
+ */
+function assignBundlePlugin(bundle: PartialBundle): esbuild.Plugin {
+  return {
+    name: 'htmelt/assignBundle',
+    setup(build) {
+      esbuildBundles.set(build.initialOptions, bundle)
+    },
+  }
+}
+
+/**
+ * Since we can't prevent a standalone script from sharing a module with an
+ * imported script (well, without duplicating code...), we need to prepend its
+ * output chunk with a stub `htmelt` object, which ensures a standalone script
+ * won't crash on `htmelt.export` calls.
+ */
+function standAloneScriptPlugin(
+  isStandalone: (entry: string) => boolean,
+  config: Config
+): esbuild.Plugin {
+  return {
     name: 'htmelt/standaloneScripts',
     setup(build) {
-      if (!flags.watch || !isStandalone) {
-        return
-      }
       let stubPath: string | undefined
       build.onEnd(({ metafile }) => {
         if (!metafile) return
@@ -142,30 +191,4 @@ export function buildEntryScripts(
       })
     },
   }
-
-  return esbuild.context(
-    wrapPlugins({
-      format: 'esm',
-      charset: 'utf8',
-      sourcemap: config.mode == 'development',
-      minify: !flags.watch && flags.minify != false,
-      ...config.esbuild,
-      entryPoints: [...scripts],
-      entryNames: '[dir]/[name]' + (flags.watch ? '' : '.[hash]'),
-      outbase: config.src,
-      outdir: config.build,
-      metafile: true,
-      write: true,
-      bundle: true,
-      splitting: true,
-      treeShaking: !flags.watch,
-      ignoreAnnotations: flags.watch,
-      plugins: [
-        ...(config.esbuild.plugins || []),
-        metaUrlPlugin(),
-        importGlobPlugin(),
-        standaloneScriptPlugin,
-      ],
-    })
-  )
 }

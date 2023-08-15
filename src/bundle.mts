@@ -15,6 +15,7 @@ import * as path from 'path'
 import { performance } from 'perf_hooks'
 import { debounce } from 'ts-debounce'
 import { promisify } from 'util'
+import { PartialBundle } from './bundle/types.mjs'
 import { buildClientConnection } from './clientUtils.mjs'
 import { copyFiles } from './copy.mjs'
 import { buildRelativeStyles, findRelativeStyles } from './css.mjs'
@@ -26,18 +27,6 @@ import {
 import { buildHTML, parseHTML } from './html.mjs'
 import { updateRelatedWatcher } from './relatedWatcher.mjs'
 import { createDir, setsEqual } from './utils.mjs'
-
-type PartialBundle = {
-  id: string
-  hmr: boolean
-  scripts: Set<string>
-  importers: Plugin.Document[]
-  entries?: Set<string>
-  context?: esbuild.BuildContext<{ metafile: true }>
-  metafile?: esbuild.Metafile
-  /** Same as `metafile.inputs` but mapped with `fileToId` */
-  inputs?: string[]
-}
 
 export async function bundle(config: Config, flags: BundleFlags) {
   if (flags.deletePrev ?? config.deletePrev) {
@@ -92,7 +81,8 @@ export async function bundle(config: Config, flags: BundleFlags) {
           newEntries,
           bundle.scripts.size > 0 && (entry => bundle.scripts.has(entry)),
           config,
-          flags
+          flags,
+          bundle
         )
         bundle.context = context
         bundle.entries = newEntries

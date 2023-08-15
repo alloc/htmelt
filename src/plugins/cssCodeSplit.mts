@@ -1,4 +1,5 @@
 import { Config, fileToId, idToUri, md5Hex, Plugin } from '@htmelt/plugin'
+import { esbuildBundles } from '../bundle/context.mjs'
 import { buildCSSFile } from '../css.mjs'
 
 /**
@@ -21,6 +22,18 @@ export const cssCodeSplit: Plugin = (config, flags) => {
       build.onTransform({ filter: /\.css$/ }, args => {
         if (new URLSearchParams(args.suffix).has('raw')) {
           return null
+        }
+        if (!flags.watch) {
+          // TODO: identify dynamically imported chunks
+          const bundle = esbuildBundles.get(build.initialOptions)
+          if (bundle) {
+            bundle.injectedStyles ||= []
+            bundle.injectedStyles.push(args.code)
+            return {
+              loader: 'js',
+              code: 'export {}',
+            }
+          }
         }
         return {
           loader: 'js',
