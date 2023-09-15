@@ -22,7 +22,7 @@ export const devModulesPlugin: Plugin = async config => {
 
   config.watcher?.on('unlink', file => {
     const id = fileToId(file)
-    delete modules[id]
+    modules.delete(id)
   })
 
   const esbuildDevModules: esbuild.Plugin = {
@@ -65,7 +65,7 @@ export const devModulesPlugin: Plugin = async config => {
                 }
 
                 const resolvedId = fileToId(resolved.path, resolved.namespace)
-                if (!(resolvedId in modules)) {
+                if (!modules.has(resolvedId)) {
                   continue
                 }
 
@@ -274,7 +274,14 @@ export const devModulesPlugin: Plugin = async config => {
           })
         )
 
-        const newId = !modules[id]
+        const newId = !modules.has(id)
+        const newModule: Module = {
+          id,
+          imports: new Set(),
+        }
+
+        modules.set(id, newModule)
+
         const result = nebu.process(args.code, {
           ast: program,
           filename: args.path,
@@ -282,10 +289,7 @@ export const devModulesPlugin: Plugin = async config => {
           sourceMapHiRes: true,
           plugins: [nebuDevExports],
           state: {
-            module: (modules[id] = {
-              id,
-              imports: new Set(),
-            }),
+            module: newModule,
             resolutions,
           },
         })

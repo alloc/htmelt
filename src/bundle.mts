@@ -353,7 +353,7 @@ export async function bundle(config: Config, flags: BundleFlags) {
         }
         if (isFullReload) {
           requestRebuild()
-        } else if (id.endsWith('.css') || id in config.modules!) {
+        } else if (id.endsWith('.css') || config.modules!.has(id)) {
           changedModules.add(id)
           requestRebuild()
         }

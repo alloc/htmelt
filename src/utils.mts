@@ -135,3 +135,18 @@ export function findDirectoryUp(
 
   return dir
 }
+
+export class CaseInsensitiveMap<V> extends Map<string, V> {
+  get(key: string) {
+    return super.get(key.toLowerCase())
+  }
+  set(key: string, value: V) {
+    return super.set(key.toLowerCase(), value)
+  }
+  has(key: string) {
+    return super.has(key.toLowerCase())
+  }
+  delete(key: string) {
+    return super.delete(key.toLowerCase())
+  }
+}

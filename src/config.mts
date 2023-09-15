@@ -20,7 +20,7 @@ import { loadConfig } from 'unconfig'
 import { promisify } from 'util'
 import { importHandler } from './devServer.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
-import { findFreeTcpPort } from './utils.mjs'
+import { CaseInsensitiveMap, findFreeTcpPort } from './utils.mjs'
 
 const env = JSON.stringify
 
@@ -299,7 +299,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   }
 
   if (flags.watch) {
-    config.modules = {}
+    config.modules = new CaseInsensitiveMap()
     config.watcher = config.watch([srcDir, ...(userConfig.watchFiles || [])])
     config.relatedWatcher = createRelatedWatcher(config)
   }

@@ -165,8 +165,12 @@ export type Config = Merge<
     /** Packages that have been linked into `node_modules` somewhere. */
     linkedPackages?: Set<string>
 
-    /** Modules bundled for the client. Exists in watch mode only. */
-    modules?: Record<string, Module>
+    /**
+     * Modules bundled for the client. Exists in watch mode only.
+     *
+     * Implemented with case-insensitive keys to align with Esbuild.
+     */
+    modules?: Map<string, Module>
 
     /**
      * Watches the filesystem so the bundler and plugins can react to
