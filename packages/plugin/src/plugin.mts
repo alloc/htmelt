@@ -6,7 +6,7 @@ import type { Attribute, Element, ParentNode } from 'parse5'
 import type { UrlWithStringQuery } from 'url'
 import * as lightningCss from '../types/lightningcss'
 import type { Promisable } from '../types/type-fest'
-import type { Config, Entry } from './config.mjs'
+import type { Config, Entry } from './configTypes.mjs'
 import type { Flags } from './flags.mjs'
 
 export interface Plugin {

@@ -5,6 +5,7 @@ import {
   fileToId,
   Flags,
   HttpsConfig,
+  loadConfigFile,
   md5Hex,
   Plugin,
   UserConfig,
@@ -16,7 +17,6 @@ import * as fs from 'fs'
 import glob from 'glob'
 import * as lightningCss from 'lightningcss'
 import * as path from 'path'
-import { loadConfig } from 'unconfig'
 import { promisify } from 'util'
 import { importHandler } from './devServer.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
@@ -30,14 +30,18 @@ const env = JSON.stringify
  */
 export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   const nodeEnv = (process.env.NODE_ENV ||= 'development')
-  const result = await loadConfig<UserConfig>({
-    sources: [
-      { files: 'bundle.config' },
-      { files: 'package.json', rewrite: (config: any) => config?.bundle },
-    ],
-  })
 
-  const userConfig = result.config as UserConfig
+  const configResult = await loadConfigFile<UserConfig>('bundle.config')
+  const userConfig = configResult?.mod.default ?? {}
+
+  if (configResult) {
+    console.log(
+      'Loaded %s in %sms',
+      path.relative(process.cwd(), configResult.filePath),
+      configResult.loadTime
+    )
+  }
+
   const preDefaultPlugins: Plugin[] = [
     await loadPlugin(import('./plugins/alias.mjs')),
     await loadPlugin(import('./plugins/virtualFiles.mjs')),

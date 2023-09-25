@@ -1,6 +1,4 @@
-import { createFilter } from '@htmelt/plugin'
-import type { LoadConfigResult, LoadConfigSource } from '@unocss/config'
-import { loadConfig } from '@unocss/config'
+import { createFilter, loadConfigFile } from '@htmelt/plugin'
 import type {
   UnocssPluginContext,
   UserConfig,
@@ -17,9 +15,7 @@ import { defaultExclude, defaultInclude } from './defaults.mjs'
 // https://github.com/unocss/unocss/blob/ef02bb17e20e646b3e07d8ef40bd6bf53dd5b7db/packages/shared-integration/src/context.ts
 export function createContext<Config extends UserConfig<any> = UserConfig<any>>(
   configOrPath?: Config | string,
-  defaults: UserConfigDefaults = {},
-  extraConfigSources: LoadConfigSource[] = [],
-  resolveConfigResult: (config: LoadConfigResult<Config>) => void = () => {}
+  defaults: UserConfigDefaults = {}
 ): UnocssPluginContext<Config> {
   let root = process.cwd()
   let rawConfig = {} as Config
@@ -38,16 +34,15 @@ export function createContext<Config extends UserConfig<any> = UserConfig<any>>(
   let ready = reloadConfig()
 
   async function reloadConfig() {
-    const result = await loadConfig(
-      root,
-      configOrPath,
-      extraConfigSources,
-      defaults
-    )
-    resolveConfigResult(result)
+    const result = await loadConfigFile<Config>('unocss.config', root)
 
-    rawConfig = result.config
-    configFileList = result.sources
+    if (result) {
+      rawConfig = result.mod.default
+      configFileList = [result.filePath]
+    } else {
+      rawConfig = {} as Config
+    }
+
     uno.setConfig(rawConfig)
     uno.config.envMode = 'dev'
     rollupFilter = createFilter(
@@ -72,7 +67,10 @@ export function createContext<Config extends UserConfig<any> = UserConfig<any>>(
       else presets.add(i.name)
     })
 
-    return result
+    return {
+      config: rawConfig,
+      sources: configFileList,
+    }
   }
 
   async function updateRoot(newRoot: string) {

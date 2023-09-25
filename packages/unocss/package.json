@@ -13,8 +13,7 @@
     "env.d.ts"
   ],
   "dependencies": {
-    "@htmelt/plugin": "workspace:^0.3.0",
-    "@unocss/config": "^0.50.8"
+    "@htmelt/plugin": "workspace:^0.3.0"
   },
   "peerDependencies": {
     "@unocss/core": "*"
