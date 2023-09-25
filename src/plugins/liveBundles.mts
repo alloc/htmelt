@@ -13,6 +13,9 @@ export const liveBundlesPlugin: Plugin = config => {
   let pendingBundles: Record<string, Promise<any>> = {}
 
   config.watcher!.on('change', file => {
+    if (!config.bundles) {
+      return // Still initializing.
+    }
     file = path.relative(process.cwd(), file)
     for (const bundle of Object.values(config.bundles)) {
       if (file in bundle.metafile.inputs) {
