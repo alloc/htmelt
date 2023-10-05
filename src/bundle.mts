@@ -33,6 +33,8 @@ export async function bundle(config: Config, flags: BundleFlags) {
     fs.rmSync(config.build, { force: true, recursive: true })
   }
 
+  flags.minify ??= config.mode != 'development'
+
   let server: import('http').Server | undefined
   if (flags.watch) {
     const { installHttpServer } = await import('./devServer.mjs')

@@ -96,17 +96,15 @@ export async function buildHTML(
 
   let html = serialize(document.documentElement)
 
-  if (!flags.watch) {
-    if (flags.minify !== false) {
-      try {
-        html = await minify(html, {
-          collapseWhitespace: true,
-          removeComments: true,
-          ...config.htmlMinifierTerser,
-        })
-      } catch (e) {
-        console.error(e)
-      }
+  if (flags.minify) {
+    try {
+      html = await minify(html, {
+        collapseWhitespace: true,
+        removeComments: true,
+        ...config.htmlMinifierTerser,
+      })
+    } catch (e) {
+      console.error(e)
     }
   }
 

@@ -37,9 +37,7 @@ export async function buildCSSFile(
   }
 
   const bundle = await lightningCss.bundleAsync({
-    minify:
-      flags.minify == true ||
-      (flags.minify == null && config.mode != 'development'),
+    minify: flags.minify,
     sourceMap: config.mode == 'development',
     errorRecovery: true,
     visitor: visitors.length

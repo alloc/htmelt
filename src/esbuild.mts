@@ -122,7 +122,7 @@ export function buildEntryScripts(
       format: 'esm',
       charset: 'utf8',
       sourcemap: config.mode == 'development',
-      minify: !flags.watch && flags.minify != false,
+      minify: flags.minify,
       ...config.esbuild,
       entryPoints: [...scripts],
       entryNames: '[dir]/[name]' + (flags.watch ? '' : '.[hash]'),
