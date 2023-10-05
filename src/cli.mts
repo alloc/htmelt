@@ -12,7 +12,10 @@ const cli = cac('htmelt')
   .option('--port <port>', `[number]`)
 
 const commands: CLI['commands'] = {
-  default: cli.command('').option('--minify', `[boolean]`),
+  default: cli
+    .command('')
+    .option('--minify', `[boolean]`)
+    .option('--deletePrev', `[boolean]`),
 }
 
 const flags = parseFlags(cli)
