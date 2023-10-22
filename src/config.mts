@@ -283,7 +283,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       define: {
         ...userConfig.esbuild?.define,
         'process.env.NODE_ENV': env(nodeEnv),
-        'import.meta.env.DEV': env(nodeEnv == 'development'),
+        'import.meta.env.DEV': env(nodeEnv != 'production'),
         'import.meta.env.DEV_URL': 'undefined',
         'import.meta.env.HMR_URL': 'undefined',
       },
