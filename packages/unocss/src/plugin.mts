@@ -21,7 +21,7 @@ const VIRTUAL_PREFIX = '@htmelt-unocss/'
 export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
   config => {
     const moduleMap = new Map<string, [string, string]>()
-    const { uno, filter } = createContext(options)
+    const { uno, filter, ready } = createContext(options)
 
     let cache: Record<string, string | null> | undefined
     if (config.watcher) {
@@ -55,6 +55,7 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
 
           let css = cache?.[file]
           if (css === undefined) {
+            await ready
             const unoResult = await uno.generate(args.code, {
               id: file,
               preflights: false,
