@@ -109,7 +109,11 @@ export function buildEntryScripts(
   }
 
   let plugins = config.esbuild.plugins || []
-  plugins = [...plugins, metaUrlPlugin(), importGlobPlugin()]
+  plugins = [
+    ...plugins,
+    metaUrlPlugin(),
+    importGlobPlugin(config.relatedWatcher),
+  ]
   if (bundle) {
     plugins.unshift(assignBundlePlugin(bundle))
   }

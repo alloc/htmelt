@@ -143,7 +143,7 @@ export const devModulesPlugin: Plugin = async config => {
       plugins: [
         ...config.esbuild.plugins,
         metaUrlPlugin(),
-        importGlobPlugin(),
+        importGlobPlugin(config.relatedWatcher),
         esbuildDevModules,
       ],
     })

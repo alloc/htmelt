@@ -18,7 +18,10 @@ export type TransformConfig = {
   ts?: boolean
   jsx?: boolean
   fs?: FileSystemAdapter
+  onGlobImport?: OnGlobImport
 }
+
+export type OnGlobImport = (glob: string | string[], files: string[]) => void
 
 type BabelPluginState = {
   counter: number
@@ -52,6 +55,7 @@ function babelPluginGlobTransformation(
             state.opts.path
           )
 
+          state.opts.onGlobImport?.(patterns, files)
           replaceImportGlobNode(nodePath, state.counter, files, options)
           ++state.counter
         }
