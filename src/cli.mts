@@ -9,6 +9,7 @@ import { parseFlags } from './utils.mjs'
 const cli = cac('htmelt')
   .option('-o, --outDir <dir>', `[string] set the build directory`)
   .option('--watch', `[boolean]`)
+  .option('--base <path>', `[string]`)
   .option('--port <port>', `[number]`)
 
 const commands: CLI['commands'] = {
