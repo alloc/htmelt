@@ -9,14 +9,15 @@ import { parseFlags } from './utils.mjs'
 const cli = cac('htmelt')
   .option('-o, --outDir <dir>', `[string] set the build directory`)
   .option('--watch', `[boolean]`)
-  .option('--base <path>', `[string]`)
+  .option('--host <host>', `[string]`)
   .option('--port <port>', `[number]`)
 
 const commands: CLI['commands'] = {
   default: cli
     .command('')
-    .option('--minify', `[boolean]`)
-    .option('--deletePrev', `[boolean]`),
+    .option('--base <path>', `[string]`)
+    .option('--deletePrev', `[boolean]`)
+    .option('--minify', `[boolean]`),
 }
 
 const flags = parseFlags(cli)

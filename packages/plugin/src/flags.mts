@@ -4,6 +4,7 @@
 export interface Flags {
   base?: string
   outDir?: string
+  host?: string
   port?: number
   watch?: boolean
 }
