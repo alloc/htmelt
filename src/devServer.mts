@@ -138,7 +138,7 @@ export async function installHttpServer(
     }
 
     // If no plugin handled the request, check the virtual filesystem.
-    let uri = request.pathname
+    let uri = decodeURIComponent(request.pathname)
     if (!file) {
       file = await serveFile(uri, request)
       if (!file && !uri.startsWith('/@fs/')) {
