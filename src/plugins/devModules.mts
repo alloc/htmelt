@@ -241,6 +241,10 @@ export const devModulesPlugin: Plugin = async config => {
       }
 
       build.onTransform({ loaders: ['js', 'jsx'] }, async args => {
+        if (args.code.trim() === '') {
+          return null
+        }
+
         const id = fileToId(args.initialPath || args.path, args.namespace)
 
         const program = parse(args.code, {
