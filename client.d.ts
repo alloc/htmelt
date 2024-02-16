@@ -1,7 +1,12 @@
-type ImportMetaExtensions =
-  import('@htmelt/plugin/dist/importMeta.mjs').ImportMeta
+type PluginImportMeta = import('@htmelt/plugin/dist/importMeta.mjs').ImportMeta
+type PluginImportMetaEnv =
+  import('@htmelt/plugin/dist/importMeta.mjs').ImportMetaEnv
 
-interface ImportMeta extends ImportMetaExtensions {}
+interface ImportMetaEnv extends PluginImportMetaEnv {}
+
+interface ImportMeta extends PluginImportMeta {
+  env: ImportMetaEnv
+}
 
 declare const process: {
   env: {
