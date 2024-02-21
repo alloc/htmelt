@@ -326,7 +326,7 @@ export const devModulesPlugin: Plugin = async config => {
 
   return {
     async serve({ path, searchParams }, response) {
-      if (searchParams.has('t')) {
+      if (searchParams.has('t') && path.endsWith('.js')) {
         const id = uriToId(path)
         const namespace = parseNamespace(id)
         const filePath = !namespace ? uriToFile(path) : undefined
