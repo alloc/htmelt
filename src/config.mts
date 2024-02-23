@@ -17,12 +17,12 @@ import * as fs from 'fs'
 import glob from 'glob'
 import * as lightningCss from 'lightningcss'
 import * as path from 'path'
-import { promisify } from 'util'
 import { importHandler } from './devServer.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
 import { CaseInsensitiveMap, findFreeTcpPort } from './utils.mjs'
 
 const env = JSON.stringify
+const Glob = glob.Glob
 
 /**
  * Load the `bundle.config.js` file from the working directory, or use
@@ -66,9 +66,20 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   const srcDirPrefix = srcDir ? srcDir + '/' : srcDir
   const outDirPrefix = outDir + '/'
 
-  const entries = (await promisify(glob)(srcDirPrefix + '**/*.html'))
+  const devOnlyEntries =
+    (nodeEnv !== 'development' &&
+      userConfig.devOnlyEntries?.map(
+        glob => new Glob(srcDirPrefix + glob).minimatch
+      )) ||
+    []
+
+  const entries = glob
+    .sync(srcDirPrefix + '**/*.html')
     .filter(file => {
-      return !file.startsWith(outDirPrefix)
+      return (
+        !file.startsWith(outDirPrefix) &&
+        !devOnlyEntries.some(pattern => pattern.match(file))
+      )
     })
     .concat(userConfig.forcedEntries || [])
     .map(file => ({

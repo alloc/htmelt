@@ -41,6 +41,10 @@ export type UserConfig = {
    */
   forcedEntries?: string[]
   /**
+   * Entry points matching these patterns are excluded from production builds.
+   */
+  devOnlyEntries?: string[]
+  /**
    * Import aliases can be map to another specifier or a virtual file.
    */
   alias?: Record<string, string | Plugin.VirtualFile>
@@ -127,8 +131,11 @@ export interface Module {
   imports: Set<string>
 }
 
+// These properties aren't needed past the config-loading phase.
+type OmittedUserProps = 'devOnlyEntries' | 'forcedEntries' | 'watchFiles'
+
 export type Config = Merge<
-  Required<Omit<UserConfig, 'forcedEntries' | 'watchFiles'>>,
+  Required<Omit<UserConfig, OmittedUserProps>>,
   ConfigAPI & {
     mode: string
     entries: Entry[]
