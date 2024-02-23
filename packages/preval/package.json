@@ -13,7 +13,7 @@
     "client.d.ts"
   ],
   "dependencies": {
-    "@htmelt/plugin": "workspace:^0.3.0",
+    "@htmelt/plugin": "workspace:^0.4.0",
     "meriyah": "^4.3.5",
     "nebu": "^2.4.0",
     "serialize-javascript": "^6.0.1"
