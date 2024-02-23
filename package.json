@@ -1,6 +1,6 @@
 {
   "name": "htmelt",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Bundle your HTML assets with Esbuild and LightningCSS. Custom plugins, HMR platform, and more.",
   "main": "./dist/index.mjs",
   "types": "./index.d.ts",
