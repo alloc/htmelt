@@ -91,7 +91,15 @@ export async function installHttpServer(
           }
         }
       } else {
-        isAllowed = fsAllowRE.test(uri)
+        const assetPath = path.join(process.cwd(), config.assets, uri)
+        try {
+          file = {
+            path: assetPath,
+            data: fs.readFileSync(assetPath),
+          }
+        } catch {}
+
+        isAllowed = !file && fsAllowRE.test(uri)
       }
       if (isAllowed) {
         try {
