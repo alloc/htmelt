@@ -42,6 +42,9 @@ export default (options: WebExtension.Options): Plugin =>
       contentScripts,
     } = await loadManifest(target, options, config, flags)
 
+    const artifactsDir = options.artifactsDir || 'web-ext-artifacts'
+    ignoredFiles.add(artifactsDir)
+
     // Manifest V2 only.
     const backgroundEntry = backgroundPage
       ? config.entries.find(e => e.file == backgroundPage)
@@ -104,10 +107,7 @@ export default (options: WebExtension.Options): Plugin =>
 
           await webExtCmd.build({
             sourceDir: process.cwd(),
-            artifactsDir: path.resolve(
-              options.artifactsDir || 'web-ext-artifacts',
-              target.platform
-            ),
+            artifactsDir: path.resolve(artifactsDir, target.platform),
             ignoreFiles: [...ignoredFiles],
             overwriteDest: true,
           })
