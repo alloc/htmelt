@@ -78,8 +78,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       nebu:
-        specifier: ^2.3.7
-        version: 2.3.8
+        specifier: ^2.4.5
+        version: 2.4.5
       node-forge:
         specifier: ^1.3.1
         version: 1.3.1
@@ -248,10 +248,6 @@ packages:
     resolution: {integrity: sha512-TsRTRLLDW6Q4fWBAYlbkcaHQDAANKsI0smrhS/1x7/GHcjVxo+r+2VRbqrWaYpmjdhvCp5v7n2wtwkMYp+Kivw==}
     hasBin: true
     dev: true
-
-  /@alloc/is@3.1.2:
-    resolution: {integrity: sha512-VgfKuuc45fpQRanNLYNnNWVwYBy19FSBGU5Y5q4CPuglv6KLhb+ipVy7lfn9CWM43lKRzkRPU+mt8eT+mPDhDA==}
-    dev: false
 
   /@alloc/prettier-config@1.0.0:
     resolution: {integrity: sha512-xm50V1qxSdTh1O1fKA+gqcU605YSnxfq6HwtYSFU3fRsKMFnUSuSOxqSAPI7y2sRxqPed2EIuGmNn107LVQM6g==}
@@ -1334,7 +1330,7 @@ packages:
     hasBin: true
     optionalDependencies:
       dtrace-provider: 0.8.8
-      moment: 2.29.4
+      moment: 2.30.1
       mv: 2.1.1
       safe-json-stringify: 1.2.0
     dev: false
@@ -1444,7 +1440,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
 
   /chrome-launcher@0.15.1:
     resolution: {integrity: sha512-UugC8u59/w2AyX5sHLZUHoxBAiSiunUhZa3zZwMH6zPVis0C3dDKiRWyUGIo14tTbZHGVviWxv3PQWZ7taZ4fg==}
@@ -2298,8 +2294,8 @@ packages:
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -3230,8 +3226,8 @@ packages:
     hasBin: true
     dev: false
 
-  /moment@2.29.4:
-    resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
+  /moment@2.30.1:
+    resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
     requiresBuild: true
     dev: false
     optional: true
@@ -3302,19 +3298,18 @@ packages:
     dev: false
     optional: true
 
-  /nebu@2.3.8:
-    resolution: {integrity: sha512-dkQxMk8MFt8wK+Cc2J/IaAkBmOehLOEjiWa9ElRt1MXkHPNOgcJxw6XOnUWxpLB9v/xEiWLyeBymaBhMvV9AQw==}
+  /nebu@2.4.0:
+    resolution: {integrity: sha512-FKWOc+b9uLocBzIiMg0zPiO+4oFtWslykywdESmjeavPWKfewLo5pdavAB2c1uPh+OIloB9A/pYl7d3CihXWEg==}
     engines: {node: '>= 7.6.0'}
     dependencies:
-      '@alloc/is': 3.1.2
       '@alloc/types': 2.3.0
       eslint-visitor-keys: 3.4.0
       magic-string: 0.24.1
       meriyah: 4.3.5
     dev: false
 
-  /nebu@2.4.0:
-    resolution: {integrity: sha512-FKWOc+b9uLocBzIiMg0zPiO+4oFtWslykywdESmjeavPWKfewLo5pdavAB2c1uPh+OIloB9A/pYl7d3CihXWEg==}
+  /nebu@2.4.5:
+    resolution: {integrity: sha512-n+eba/B7gv9bB1qfhfKVnqdsuC/tlXaUYgJighPeXAKkarzS9LdT5xukndNt71uNBJQBIzg69EIAzpHnKBTM7w==}
     engines: {node: '>= 7.6.0'}
     dependencies:
       '@alloc/types': 2.3.0
@@ -3897,7 +3892,7 @@ packages:
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /run-parallel@1.2.0:
