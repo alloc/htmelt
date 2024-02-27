@@ -18,7 +18,7 @@ const virtualFilePlugin: Plugin = config => {
       const load = async (args: esbuild.OnLoadArgs) => {
         const virtualFile = args.pluginData || config.virtualFiles[args.path]
         const file = await loadVirtualFile(virtualFile, args.path, config)
-        if (file) {
+        if (file && file.data !== '') {
           return {
             loader: virtualFile.loader,
             contents: file.data,
