@@ -229,9 +229,12 @@ export interface ConfigAPI {
   /**
    * Convert a `src` path into a `build` path.
    *
-   * To include a content hash, provide the content as the second argument.
+   * To include a content hash, pass the content with the `content` option.
    */
-  getBuildPath(file: string, contentToHash?: string | Buffer): string
+  getBuildPath(
+    file: string,
+    options?: { content?: string | Buffer; absolute?: boolean }
+  ): string
   /**
    * Get the `file:` URL for an absolute or relative file path. If the
    * `id` is relative and `importer` is undefined (or an `https:` URL),

@@ -157,7 +157,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         ignored,
       })
     },
-    getBuildPath(file, contentToHash) {
+    getBuildPath(file, opts = {}) {
       let outFile = file
 
       const wasAbsolute = path.isAbsolute(file)
@@ -178,7 +178,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       }
 
       // Absolute path in, absolute path out
-      if (wasAbsolute) {
+      if (opts.absolute || (wasAbsolute && opts.absolute !== false)) {
         outFile = path.join(process.cwd(), outFile)
       }
 
@@ -186,8 +186,8 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       outFile = outFile.replace(/\.([cm]?)(?:jsx|tsx?)$/, '.$1js')
 
       // Add a content hash if content was provided
-      if (contentToHash != null) {
-        const contentHash = md5Hex(contentToHash).slice(0, 8).toUpperCase()
+      if (opts.content != null) {
+        const contentHash = md5Hex(opts.content).slice(0, 8).toUpperCase()
         outFile = outFile.replace(/(\.[^./]+)$/, '.' + contentHash + '$1')
       }
 
