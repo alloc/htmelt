@@ -11,7 +11,6 @@ import {
   setTextContent,
 } from '@htmelt/plugin'
 import type { UserConfig } from '@unocss/core'
-import { existsSync } from 'fs'
 import path from 'path'
 import { createContext } from './context.mjs'
 
@@ -54,75 +53,63 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
           const id = fileToId(file)
 
           let css = cache?.[file]
-          if (css === undefined) {
-            await ready
-            const unoResult = await uno.generate(args.code, {
-              id: file,
-              preflights: false,
-            })
-            css = unoResult.matched.size > 0 ? unoResult.css : null
-          }
           if (css === null) {
-            if (cache) {
-              cache[file] = null
-            }
-            moduleMap.delete(id)
             return null
           }
 
-          // Prepend a comment to the CSS for debugging purposes.
-          css = `/* unocss ${path.relative(process.cwd(), file)} */\n` + css
+          let cssPromise: Promise<string | null> | undefined
+          let cssPath =
+            VIRTUAL_PREFIX +
+            config.getBuildPath(file, { absolute: false }) +
+            '.css'
 
-          let code: string | undefined
-          let cssPath = args.path.replace(/\.([jt]sx?)$/, '.css')
-          let watchFiles: string[] | undefined
+          if (css === undefined) {
+            cssPromise = ready
+              .then(() =>
+                uno.generate(args.code, {
+                  id: file,
+                  preflights: false,
+                })
+              )
+              .then(unoResult => {
+                // Prepend a comment to the CSS for debugging purposes.
+                const css =
+                  unoResult.matched.size > 0
+                    ? `/* unocss ${path.relative(process.cwd(), file)} */\n` +
+                      unoResult.css
+                    : null
 
-          // If a CSS file exists for this JS module, simply append the
-          // generated CSS to it instead of creating a separate virtual file.
-          // Before loading the CSS file, we should unset any previous virtual
-          // file from this plugin.
-          if (existsSync(cssPath)) {
-            config.unsetVirtualFile(cssPath)
-            const promise = build
-              .load({
-                path: cssPath,
-                suffix: '?raw',
+                if (cache) {
+                  cache[file] = css
+                }
+                if (css === null) {
+                  delete config.alias[cssPath]
+                  moduleMap.delete(id)
+                } else {
+                  // TODO: use this for HMR updates
+                  const cssHash = md5Hex(css)
+                  moduleMap.set(id, [cssHash, cssPath])
+                  config.watcher?.emit('change', 'virtual:' + cssPath)
+                }
+                return css
               })
-              .then(loadResult => ({
-                data: String(loadResult.contents).replace(/\n*$/, '\n\n') + css,
-              }))
-
-            watchFiles = [cssPath]
-            config.setVirtualFile(cssPath, {
-              loader: 'css',
-              promise,
-            })
-          } else {
-            cssPath = `${VIRTUAL_PREFIX}${md5Hex(file)}.css`
-            config.alias[cssPath] = {
-              loader: 'css',
-              current: { data: css },
-            }
-            code = `import "${cssPath}";${args.code}`
-            cssPath = 'virtual:' + cssPath
           }
 
-          if (config.watcher && moduleMap.has(id)) {
-            config.watcher.emit('change', cssPath)
-          }
-          if (cache) {
-            cache[file] = css
-          }
+          const alias: Partial<Plugin.VirtualFile> = cssPromise
+            ? { promise: cssPromise.then(css => ({ data: css || '' })) }
+            : { current: { data: css! } }
 
-          // TODO: use this for HMR updates
-          const cssHash = md5Hex(css)
-          moduleMap.set(id, [cssHash, cssPath])
+          config.alias[cssPath] = { ...alias, loader: 'css' }
 
-          if (code == null) {
-            return {
-              watchFiles,
+          // If no UnoCSS tokens were found, no import is required.
+          if (cssPromise) {
+            css = await cssPromise
+            if (css === null) {
+              return null
             }
           }
+
+          const code = `import "${cssPath}";${args.code}`
 
           return {
             code,
