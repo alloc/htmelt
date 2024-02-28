@@ -324,7 +324,7 @@ async function refreshOnRebuild(
           port,
           target: pages[0].id,
         })
-        await firstPage.send('Page.navigate', {
+        await firstPage.Page.navigate({
           url: 'chrome://newtab/',
         })
       }
@@ -447,7 +447,7 @@ async function openTabs(
         targetId = firstTab.id
         needsNavigate = true
       } else {
-        targetId = (await browser.send('Target.createTarget', { url })).targetId
+        targetId = (await browser.Target.createTarget({ url })).targetId
       }
 
       target = await chromeRemote({
@@ -456,7 +456,7 @@ async function openTabs(
       })
 
       if (needsNavigate) {
-        await target.send('Page.navigate', { url })
+        await target.Page.navigate({ url })
       }
 
       if (!isRefresh) {
@@ -471,7 +471,7 @@ async function openTabs(
 
       let retries = 0
       while (true) {
-        const { result } = await target.send('Runtime.evaluate', {
+        const { result } = await target.Runtime.evaluate({
           expression: 'location.href',
         })
 
@@ -488,7 +488,7 @@ async function openTabs(
         )
 
         await new Promise(resolve => setTimeout(resolve, delay))
-        await target.send('Page.navigate', {
+        await target.Page.navigate({
           url: isChromium ? 'chrome://newtab/' : url,
         })
       }
