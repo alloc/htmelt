@@ -1,0 +1,27 @@
+{
+  "name": "@htmelt/env",
+  "version": "0.1.1",
+  "description": "Embed .env files in your code",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "scripts": {
+    "dev": "tsc -p ./ --watch --sourceMap --declarationMap",
+    "build": "rimraf dist && tsc -p ./",
+    "prepublishOnly": "rimraf dist && tsc -p ./"
+  },
+  "files": [
+    "dist",
+    "client.d.ts"
+  ],
+  "dependencies": {
+    "@htmelt/plugin": "workspace:^0.4.0",
+    "dotenv": "^16.4.5",
+    "meriyah": "^4.3.5",
+    "nebu": "^2.4.0",
+    "serialize-javascript": "^6.0.1"
+  },
+  "devDependencies": {
+    "@alloc/fast-rimraf": "^1.0.8",
+    "@types/serialize-javascript": "^5.0.2"
+  }
+}
