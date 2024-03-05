@@ -133,6 +133,31 @@ importers:
         specifier: ^4.9.4
         version: 4.9.5
 
+  packages/env:
+    dependencies:
+      '@htmelt/plugin':
+        specifier: workspace:^0.4.0
+        version: link:../plugin
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      meriyah:
+        specifier: ^4.3.5
+        version: 4.3.5
+      nebu:
+        specifier: ^2.4.0
+        version: 2.4.5
+      serialize-javascript:
+        specifier: ^6.0.1
+        version: 6.0.1
+    devDependencies:
+      '@alloc/fast-rimraf':
+        specifier: ^1.0.8
+        version: 1.0.8
+      '@types/serialize-javascript':
+        specifier: ^5.0.2
+        version: 5.0.2
+
   packages/plugin:
     dependencies:
       '@rollup/pluginutils':
@@ -1858,6 +1883,11 @@ packages:
       is-obj: 2.0.0
     dev: false
 
+  /dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+    engines: {node: '>=12'}
+    dev: false
+
   /dtrace-provider@0.8.8:
     resolution: {integrity: sha512-b7Z7cNtHPhH9EJhNNbbeqTcXB8LGFFZhq1PGgEvpeHlzd36bhbdTWoE/Ba/YguqpBSlAPKnARWhVlhunCMwfxg==}
     engines: {node: '>=0.10'}
@@ -3370,7 +3400,7 @@ packages:
     engines: {node: '>= 7.6.0'}
     dependencies:
       '@alloc/types': 2.3.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
       magic-string: 0.24.1
       meriyah: 4.3.5
     dev: false
