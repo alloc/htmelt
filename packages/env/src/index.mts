@@ -1,6 +1,5 @@
 import { Plugin } from '@htmelt/plugin'
 import dotenv from 'dotenv'
-import { existsSync } from 'fs'
 import fs from 'fs/promises'
 import { ESTree, parse } from 'meriyah'
 import { nebu, Node } from 'nebu'
@@ -54,31 +53,40 @@ export default (): Plugin => config => {
 
               const resolvedArg = path.resolve(resolveDir, arg1.value)
               try {
-                const folder = (await isDirectory(resolvedArg))
+                const parentDir = (await isDirectory(resolvedArg))
                   ? resolvedArg
                   : path.dirname(resolvedArg)
 
+                // Always watch the parent folder, so any added/removed env
+                // files are detected.
+                watchDirs.push(parentDir)
+
                 const fileName =
-                  resolvedArg === folder ? '.env' : path.basename(resolvedArg)
+                  resolvedArg === parentDir
+                    ? '.env'
+                    : path.basename(resolvedArg)
 
-                let resolvedFile: string
+                const files = [path.resolve(parentDir, fileName)]
 
-                const defaultFile = path.resolve(folder, fileName)
-                if (existsSync(defaultFile)) {
-                  resolvedFile = defaultFile
-                } else {
-                  watchDirs.push(folder)
-
-                  const files = await fs.readdir(folder)
-                  resolvedFile = files.includes(`${fileName}.${config.mode}`)
-                    ? path.resolve(folder, `${fileName}.${config.mode}`)
-                    : defaultFile
+                if (!files[0].endsWith(config.mode)) {
+                  const parentFiles = await fs.readdir(parentDir)
+                  if (parentFiles.includes(`${fileName}.${config.mode}`)) {
+                    files.push(
+                      path.resolve(parentDir, `${fileName}.${config.mode}`)
+                    )
+                  }
                 }
 
-                watchFiles.push(resolvedFile)
-                const variables = dotenv.parse(
-                  await fs.readFile(resolvedFile, 'utf8')
-                )
+                const variables: Record<string, any> = {}
+                for (const file of files) {
+                  try {
+                    Object.assign(
+                      variables,
+                      dotenv.parse(await fs.readFile(file, 'utf8'))
+                    )
+                    watchFiles.push(file)
+                  } catch {}
+                }
 
                 return [call, { variables }] as const
               } catch (error: any) {
