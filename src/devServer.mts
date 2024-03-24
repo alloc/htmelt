@@ -159,13 +159,23 @@ export async function installHttpServer(
           uri = path.posix.join(uri, 'index.html')
           file = await serveFile(uri, request)
         }
+        if (!file) {
+          uri = path.posix.join('/', config.build, '/404.html')
+          file = await serveFile(uri, request)
+        }
+        if (!file) {
+          uri = path.posix.join('/', config.build, '/index.html')
+          file = await serveFile(uri, request)
+        }
       }
     }
 
     if (file) {
       sendFile(request.pathname, response, file)
     } else {
-      console.log(red('404: %s'), req.url)
+      if (req.headers.accept?.includes('text/html')) {
+        console.log(red('404: %s'), req.url)
+      }
       response.statusCode = 404
       response.end()
     }
