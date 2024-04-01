@@ -27,7 +27,7 @@ export function injectClientConnection(
     appendChild(
       head,
       createScript({
-        src: relative(outFile, connectionFile),
+        src: relative(config.build, connectionFile).slice(1),
       })
     )
   } else {
@@ -36,7 +36,7 @@ export function injectClientConnection(
     appendChild(
       head,
       createScript({
-        src: relative(outFile, stubFile),
+        src: relative(config.build, stubFile).slice(1),
       })
     )
   }
