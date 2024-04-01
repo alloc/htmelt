@@ -19,6 +19,6 @@
     "@unocss/core": "*"
   },
   "devDependencies": {
-    "@unocss/core": "^0.50.8"
+    "@unocss/core": "^0.58.6"
   }
 }
