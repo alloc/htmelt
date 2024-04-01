@@ -318,7 +318,6 @@ export async function bundle(config: Config, flags: BundleFlags) {
       if (parseNamespace(relatedFile)) {
         watcher.emit('change', relatedFile)
       } else {
-        console.log('Touching file:', relatedFile)
         fs.utimesSync(relatedFile, new Date(), new Date())
       }
     })
