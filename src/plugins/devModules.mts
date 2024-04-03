@@ -327,14 +327,14 @@ export const devModulesPlugin: Plugin = async config => {
   const moduleRE = /\.([mc]?[tj]s|[tj]sx)$/
 
   return {
-    async serve({ path, searchParams }, response) {
-      if (searchParams.has('t') && moduleRE.test(path)) {
-        const id = uriToId(path)
+    async serve(request, response) {
+      if (request.searchParams.has('t') && moduleRE.test(request.pathname)) {
+        const id = uriToId(request.pathname)
         const namespace = parseNamespace(id)
-        const filePath = !namespace ? uriToFile(path) : undefined
+        const filePath = !namespace ? uriToFile(request.pathname) : undefined
         try {
           const data = await config.loadDevModule(filePath || id)
-          sendFile(path, response, {
+          sendFile(request.pathname, response, {
             path: filePath,
             data,
             headers: {
