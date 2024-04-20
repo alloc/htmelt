@@ -12,7 +12,8 @@
     "dev:all": "pnpm m exec -- pnpm -s dev",
     "build": "tsup-node --clean",
     "build:all": "pnpm m exec -- pnpm -s build",
-    "prepublishOnly": "tsup-node --clean"
+    "prepublishOnly": "pnpm lint && tsup-node --clean",
+    "lint": "tsc -p tsconfig.lint.json"
   },
   "files": [
     "*.{d.ts,d.mts,mjs}",
