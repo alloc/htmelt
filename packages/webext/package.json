@@ -1,6 +1,6 @@
 {
   "name": "@htmelt/webext",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": "dist/index.mjs",
   "types": "index.d.ts",
   "scripts": {
