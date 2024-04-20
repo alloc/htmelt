@@ -9,7 +9,7 @@ import {
 } from '@htmelt/plugin'
 import * as esbuild from 'esbuild'
 import { ESTree, parse } from 'meriyah'
-import { nebu, Plugin as NebuPlugin } from 'nebu'
+import { nebu, Node as NebuNode, Plugin as NebuPlugin } from 'nebu'
 import { dirname } from 'path'
 import { compileSeparateEntry } from '../esbuild.mjs'
 import { appendInlineSourceMap } from '../sourceMaps.mjs'
