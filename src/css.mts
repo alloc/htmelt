@@ -76,7 +76,9 @@ export async function buildCSSFile(
 
   return {
     ...bundle,
-    outFile: config.getBuildPath(file, flags.watch ? undefined : bundle.code),
+    outFile: config.getBuildPath(file, {
+      content: flags.watch ? undefined : bundle.code,
+    }),
   }
 }
 
