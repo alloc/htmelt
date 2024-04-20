@@ -1,6 +1,6 @@
 {
   "name": "@htmelt/env",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Embed .env files in your code",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
