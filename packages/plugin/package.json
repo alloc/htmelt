@@ -4,7 +4,7 @@
   "main": "dist/index.mjs",
   "types": "index.d.ts",
   "scripts": {
-    "dev": "tsc -p ./ --watch --sourceMap --declarationMap",
+    "dev": "tsc -p ./ --watch --sourceMap --declarationMap --preserveWatchOutput",
     "build": "rimraf dist && tsc -p ./",
     "prepublishOnly": "rimraf dist && tsc -p ./"
   },
