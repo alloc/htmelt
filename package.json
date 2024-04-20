@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "tsup-node --watch --sourcemap",
+    "dev:all": "pnpm m exec -- pnpm -s dev",
     "build": "tsup-node --clean",
+    "build:all": "pnpm m exec -- pnpm -s build",
     "prepublishOnly": "tsup-node --clean"
   },
   "files": [
