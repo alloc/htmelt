@@ -1,7 +1,8 @@
 {
+  "editor.tabSize": 2,
   "rewrap.wrappingColumn": 80,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true
+    "source.organizeImports": "explicit"
   },
   "editor.wordWrapColumn": 100,
   "typescript.suggest.autoImports": true,
