@@ -305,10 +305,6 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       targets:
         userConfig.lightningCss?.targets ??
         lightningCss.browserslistToTargets(browserslist(browsers)),
-      drafts: {
-        nesting: true,
-        ...userConfig.lightningCss?.drafts,
-      },
     },
     server: null!,
     ...api,

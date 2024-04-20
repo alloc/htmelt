@@ -83,7 +83,7 @@ export const cssReloadPlugin: Plugin = (config, flags) => {
                 uri = alias ? idToUri(id) : fileToId(config.getBuildPath(file))
               } else if (path.isAbsolute(file) && fs.existsSync(file)) {
                 const result = await buildCSSFile(file, config, flags)
-                const cssText = result.code.toString('utf8')
+                const cssText = Buffer.from(result.code).toString('utf8')
                 const entry = cssEntries.get(id)!
                 const hash = md5Hex(cssText)
                 if (entry.hash !== hash) {
