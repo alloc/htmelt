@@ -18,6 +18,7 @@ import glob from 'glob'
 import * as lightningCss from 'lightningcss'
 import * as path from 'path'
 import { importHandler } from './devServer.mjs'
+import localAddress from './localAddress.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
 import { CaseInsensitiveMap, findFreeTcpPort } from './utils.mjs'
 
@@ -228,7 +229,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       }
 
       const protocol = https ? 'https' : 'http'
-      const host = flags.host ?? 'localhost'
+      const host = flags.host
+        ? localAddress(flags.host === true ? 'public' : flags.host)
+        : 'localhost'
+
       const url = (serverUrl = new URL(`${protocol}://${host}:${port}`))
 
       config.esbuild.define['import.meta.env.DEV_URL'] = env(url)
