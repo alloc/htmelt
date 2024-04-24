@@ -37,9 +37,6 @@ export const cssReloadPlugin: Plugin = (config, flags) => {
       styles.forEach(style => {
         const srcAttr = style.srcAttr.value
         if (srcAttr.startsWith(buildPrefix)) {
-          const devUrl = config.resolveDevUrl(srcAttr)
-          style.srcAttr.value = devUrl.href
-
           // TODO: get file hash
           cssEntries.set(fileToId(style.srcPath), {
             hash: '',

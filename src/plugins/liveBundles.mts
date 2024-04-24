@@ -4,9 +4,10 @@ import { toBundleInputs } from '../bundle.mjs'
 import { updateRelatedWatcher } from '../relatedWatcher.mjs'
 
 /**
- * By default, any scripts in your HTML files are rewritten to use the
- * build directory. This plugin rewrites them to use the dev server
- * instead and rebuilds each bundle only when necessary.
+ * This plugin tracks changes to JavaScript modules that were bundled by
+ * ESBuild. If a dev server request is made for a file that changed since the
+ * last build, the plugin will rebuild the bundle before the dev server fulfills
+ * the request.
  */
 export const liveBundlesPlugin: Plugin = config => {
   let dirtyBundles = new Set<Plugin.Bundle>()
@@ -52,20 +53,6 @@ export const liveBundlesPlugin: Plugin = config => {
   }
 
   return {
-    document(document) {
-      for (const script of document.scripts) {
-        // Since live reloading of <script> tags relies on dynamic
-        // import(…) calls, only module scripts are supported.
-        if (!script.isModule) {
-          continue
-        }
-        // Rewrite <script> src to point to the dev server.
-        script.srcAttr.value = new URL(
-          script.srcAttr.value,
-          config.server.url
-        ).href
-      }
-    },
     async fullReload() {
       // If a full reload is impending, rebuild any dirty bundles first,
       // so the build directory is up-to-date.
