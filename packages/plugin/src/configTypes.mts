@@ -137,6 +137,7 @@ type OmittedUserProps = 'devOnlyEntries' | 'forcedEntries' | 'watchFiles'
 export type Config = Merge<
   Required<Omit<UserConfig, OmittedUserProps>>,
   ConfigAPI & {
+    gitRoot: string | null
     mode: string
     entries: Entry[]
     plugins: PluginInstance[]

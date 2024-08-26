@@ -20,7 +20,7 @@ import * as path from 'path'
 import { importHandler } from './devServer.mjs'
 import localAddress from './localAddress.mjs'
 import { createRelatedWatcher } from './relatedWatcher.mjs'
-import { CaseInsensitiveMap, findFreeTcpPort } from './utils.mjs'
+import { CaseInsensitiveMap, findDirectoryUp, findFreeTcpPort } from './utils.mjs'
 
 const env = JSON.stringify
 const Glob = glob.Glob
@@ -267,6 +267,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     assets: 'public',
     deletePrev: false,
     ...userConfig,
+    gitRoot: findDirectoryUp(process.cwd(), ['.git']),
     mode: nodeEnv,
     src: srcDir,
     build: outDir,
