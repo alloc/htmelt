@@ -11,7 +11,7 @@ import * as fs from 'fs'
 import { gray, red, yellow } from 'kleur/colors'
 import * as lightningCss from 'lightningcss'
 import path from 'path'
-import { createDir } from './utils.mjs'
+import { createDir, findNodeModule } from './utils.mjs'
 
 export async function buildCSSFile(
   file: string,
@@ -49,7 +49,13 @@ export async function buildCSSFile(
           return path.resolve(path.dirname(originatingFile), specifier)
         }
         // Assume bare imports are found in root node_modules.
-        return path.resolve('node_modules', specifier)
+        return findNodeModule(
+          path.dirname(originatingFile),
+          specifier,
+          config.gitRoot ?? path.parse(originatingFile).root
+        ).then(filePath => {
+          return filePath ?? path.resolve('node_modules', specifier)
+        })
       },
     },
     ...config.lightningCss,

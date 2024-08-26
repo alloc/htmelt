@@ -150,3 +150,26 @@ export class CaseInsensitiveMap<V> extends Map<string, V> {
     return super.delete(key.toLowerCase())
   }
 }
+
+export async function findNodeModule(
+  fromDir: string,
+  modulePath: string,
+  stopDir: string
+) {
+  let currentDir = fromDir
+  while (true) {
+    const potentialPath = path.join(currentDir, 'node_modules', modulePath)
+    if (
+      await fs.promises.access(potentialPath).then(
+        () => true,
+        () => false
+      )
+    ) {
+      return potentialPath
+    }
+    if (currentDir === stopDir) {
+      return null
+    }
+    currentDir = path.dirname(currentDir)
+  }
+}
