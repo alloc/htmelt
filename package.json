@@ -8,11 +8,11 @@
     "htmelt": "./bin/htmelt.sh"
   },
   "scripts": {
-    "dev": "tsup-node --watch --sourcemap",
+    "dev": "rimraf dist && tsup-node --watch --sourcemap",
     "dev:all": "pnpm m exec -- pnpm -s dev",
-    "build": "tsup-node --clean",
+    "build": "rimraf dist && tsup-node",
     "build:all": "pnpm m exec -- pnpm -s build",
-    "prepublishOnly": "pnpm lint && tsup-node --clean",
+    "prepublishOnly": "pnpm lint && rimraf dist && tsup-node",
     "lint": "tsc -p tsconfig.lint.json"
   },
   "files": [
@@ -51,6 +51,7 @@
     "@types/source-map-support": "^0.5.10",
     "@types/ws": "^8.5.10",
     "prettier": "^2.8.8",
+    "rimraf": "^6.0.1",
     "tsup": "^6.7.0",
     "typescript": "^4.9.5"
   },
