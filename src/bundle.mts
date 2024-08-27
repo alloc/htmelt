@@ -252,7 +252,7 @@ export async function bundle(config: Config, flags: BundleFlags) {
 
         const file = uri.startsWith('/@fs/')
           ? uri.slice(4)
-          : path.join(process.cwd(), uri)
+          : path.join(config.root, uri)
 
         const oldScripts = document.scripts
         const oldMetafile = document.bundle.metafile

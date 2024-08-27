@@ -94,7 +94,7 @@ export default (options: WebExtension.Options): Plugin =>
                 resources[index] = {
                   ...resource,
                   rules: undefined,
-                  path: path.relative(process.cwd(), resourcePath),
+                  path: path.relative(config.root, resourcePath),
                 }
               }
             }
@@ -106,8 +106,12 @@ export default (options: WebExtension.Options): Plugin =>
           writeManifest(manifest)
 
           await webExtCmd.build({
-            sourceDir: process.cwd(),
-            artifactsDir: path.resolve(artifactsDir, target.platform),
+            sourceDir: config.root,
+            artifactsDir: path.resolve(
+              config.root,
+              artifactsDir,
+              target.platform
+            ),
             ignoreFiles: [...ignoredFiles],
             overwriteDest: true,
           })

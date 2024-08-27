@@ -35,6 +35,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
   const configResult = await loadConfigFile<UserConfig>('bundle.config')
   const userConfig = configResult?.mod.default ?? {}
 
+  const root =
+    userConfig.root ??
+    (configResult ? path.dirname(configResult.filePath) : process.cwd())
+
   if (configResult) {
     console.log(
       'Loaded %s in %sms',
@@ -61,10 +65,10 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     )
   }
 
-  const srcDir = normalizePath(userConfig.src ?? 'src')
-  const outDir = normalizePath(flags.outDir || (userConfig.build ?? 'build'))
+  let srcDir = normalizePath(userConfig.src ?? 'src')
+  let outDir = normalizePath(flags.outDir || (userConfig.build ?? 'build'))
 
-  const srcDirPrefix = srcDir ? srcDir + '/' : srcDir
+  const srcDirPrefix = srcDir !== '' ? srcDir + '/' : srcDir
   const outDirPrefix = outDir + '/'
 
   const devOnlyEntries =
@@ -163,7 +167,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
       const wasAbsolute = path.isAbsolute(file)
       if (wasAbsolute) {
-        file = path.relative(process.cwd(), file)
+        file = path.relative(root, file)
       }
 
       const src = config.src.replace(/^\.\//, '') + '/'
@@ -180,7 +184,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
 
       // Absolute path in, absolute path out
       if (opts.absolute || (wasAbsolute && opts.absolute !== false)) {
-        outFile = path.join(process.cwd(), outFile)
+        outFile = path.join(root, outFile)
       }
 
       // Replace .jsx/.tsx with .js
@@ -206,7 +210,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
         importer = new URL(importer, 'file:')
       }
       if (id[0] === '/' && importer?.protocol === 'file:') {
-        return new URL('file://' + process.cwd() + id)
+        return new URL('file://' + root + id)
       }
       return new URL(id, importer)
     },
@@ -263,18 +267,20 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
     loadDevModule: null!,
   }
 
+  srcDir = path.resolve(root, srcDir)
+  outDir = path.resolve(root, outDir)
+
   const config: Config = {
     assets: 'public',
     deletePrev: false,
     ...userConfig,
-    gitRoot: findDirectoryUp(process.cwd(), ['.git']),
     mode: nodeEnv,
+    root,
+    gitRoot: findDirectoryUp(root, ['.git']),
     src: srcDir,
     build: outDir,
     base:
-      flags.base ??
-      userConfig.base ??
-      '/' + path.relative(process.cwd(), outDir) + '/',
+      flags.base ?? userConfig.base ?? '/' + path.relative(root, outDir) + '/',
     entries,
     plugins: [],
     bundles: undefined!,
@@ -287,7 +293,7 @@ export async function loadBundleConfig(flags: Flags, cli?: CLI) {
       '**/{node_modules,.git}/**',
       ...(userConfig.watchIgnore || []),
     ],
-    linkedPackages: flags.watch ? findLinkedPackages(process.cwd()) : undefined,
+    linkedPackages: flags.watch ? findLinkedPackages(root) : undefined,
     fsAllowedDirs: new Set(),
     copy: userConfig.copy || [],
     alias: userConfig.alias || {},

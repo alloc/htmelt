@@ -75,7 +75,7 @@ export default <Theme extends {} = {}>(options?: UserConfig<Theme>): Plugin =>
                 // Prepend a comment to the CSS for debugging purposes.
                 const css =
                   unoResult.matched.size > 0
-                    ? `/* unocss ${path.relative(process.cwd(), file)} */\n` +
+                    ? `/* unocss ${path.relative(config.root, file)} */\n` +
                       unoResult.css
                     : null
 

@@ -68,7 +68,7 @@ function getManifestFiles(
   config: Config,
   flags: Flags
 ) {
-  const ignoredFiles = new Set(fs.readdirSync(process.cwd()))
+  const ignoredFiles = new Set(fs.readdirSync(config.root))
   const keptFiles = new Set<string>()
 
   const keepFile = (file: string | undefined, watch?: boolean) => {

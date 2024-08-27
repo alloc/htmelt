@@ -8,6 +8,13 @@ import type { Plugin, PluginInstance } from './index.mjs'
 
 export type UserConfig = {
   /**
+   * The root directory of the project.
+   *
+   * If not defined, the dirname of the config file is used. If no config file
+   * is found, the current working directory is used.
+   */
+  root?: string
+  /**
    * The directory to crawl for HTML files.
    * @default "src"
    */
