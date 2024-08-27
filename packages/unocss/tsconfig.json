@@ -8,6 +8,9 @@
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "paths": {
+      "@htmelt/plugin": ["../plugin/src/index.mts"]
+    }
   }
 }
