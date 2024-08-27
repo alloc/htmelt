@@ -1,4 +1,6 @@
 /// <reference types="node" />
+import 'esbuild-extra/global.js'
+
 export * from '@rollup/pluginutils'
 export * as esbuild from 'esbuild'
 export * from 'esbuild-extra'
