@@ -2,6 +2,7 @@
 
 import { BundleFlags, CLI } from '@htmelt/plugin'
 import cac from 'cac'
+import { isNativeError } from 'util/types'
 import { bundle } from './bundle.mjs'
 import { loadBundleConfig } from './config.mjs'
 import { parseFlags } from './utils.mjs'
@@ -30,9 +31,16 @@ loadBundleConfig(flags, {
   },
 }).then(config => {
   commands.default.action(async (flags: BundleFlags) => {
-    const context = await bundle(config, flags)
-    if (!flags.watch) {
-      context.dispose()
+    try {
+      const context = await bundle(config, flags)
+      if (!flags.watch) {
+        context.dispose()
+      }
+    } catch (error: any) {
+      if (isNativeError(error) && 'errors' in error) {
+        return
+      }
+      throw error
     }
   })
 
